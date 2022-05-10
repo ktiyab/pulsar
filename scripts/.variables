@@ -3,10 +3,10 @@
 
 #--- Cloud Function default parameters
 
-# Name
+# The name of your app
 PULSAR_NAME="pulsar"
 # Zip
-PULSAR_ZIP="pulsar.zip"
+PULSAR_ZIP=$PULSAR_NAME".zip"
 # Local folder
 PULSAR_FOLDER="app"
 
@@ -14,7 +14,7 @@ PULSAR_FOLDER="app"
 PULSAR_REGION="europe-west1"
 
 # Run entry point
-PULSAR_ENTRY_POINT="pulse"
+PULSAR_ENTRY_POINT="run"
 PULSAR_MEMORY="512M"
 PULSAR_RUNTIME="python39"
 
@@ -28,12 +28,20 @@ PULSAR_MIN_INSTANCE="0"
 PULSAR_MAX_INSTANCE="100"
 
 #--- PubSub default parameters
-PULSAR_TOPIC="pulsar-topic"
+PULSAR_TOPIC=$PULSAR_NAME"-topic"
 
 #--- Storage bucket name
-PULSAR_BUCKET_ID_SUFFIX="-pulsar"
+PULSAR_BUCKET_ID_SUFFIX="-"$PULSAR_NAME
 
 #--- Secret Manager
 PULSAR_SECRETS_FOLDER="secrets"
 PULSAR_SECRETS_EXT=".json"
 
+# --- Scheduler Tasks
+PULSAR_TASKS_FOLDER="tasks"
+PULSAR_TASK_SAMPLE="sample.json"
+PULSAR_TASK_SAMPLE_NAME="pulsar_sample"
+PULSAR_TASK_SAMPLE_CRON="1 1 1 1 1"
+
+# BigQuery table
+TASK_SCHEMA="task_id:STRING,task_state:STRING,task_notifier:STRING,task_owners:STRING,task_project_id:STRING,task_region:STRING,task_parameter:STRING,task_timestamp:STRING,task_success:STRING,task_message:STRING"

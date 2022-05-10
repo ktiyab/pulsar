@@ -26,7 +26,7 @@ globals_configs.DEFAULT_REGION = os.getenv("FUNCTION_REGION")
 globals_configs.DEFAULT_SERVICE_ACCOUNT = os.getenv("FUNCTION_IDENTITY")
 
 # -- Main run function
-def pulse(event, context):
+def run(event, context):
     """
 
     :param event:

@@ -60,7 +60,9 @@ PULSAR_GCS_SOURCE_PATH=$PULSAR_BUCKET_NAME_PATH$PULSAR_ZIP
 
 
 # Notification
-echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$SOURCE"
+# Show deployment project
+gcloud config configurations list
+echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$SOURCE in the project ID $PROJECT_ID"
 read -p "---> Continue? [Y/y or N/n]: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
@@ -95,6 +97,9 @@ then
       gsutil rm $PULSAR_GCS_SOURCE_PATH
       echo "---> Copying the cloud function to the bucket..."
       gsutil cp "$PULSAR_ZIP" "$PULSAR_BUCKET_NAME_PATH"
+
+      # Moving cursor to original position
+      cd ./scripts
   else
       echo "---> Using existing Cloud Storage configurations and files"
   fi
@@ -186,36 +191,96 @@ then
       --region="$REGION"
       echo "---> The old Cloud function is deleted"
 
-          #------------  Deploy function
-          read -p "--> Do you want to create a new cloud function? [Y/y or N/n]: " -n 1 -r
-          echo
-          if [[ $REPLY =~ ^[Yy]$ ]]
-          then
-              echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$PULSAR_REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$PULSAR_GCS_SOURCE_PATH"
-              gcloud beta functions deploy "$PULSAR_NAME" \
-                                      --gen2 \
-                                      --region="$REGION" \
-                                      --service-account="$PULSAR_SERVICE_ACCOUNT" \
-                                      --entry-point="$PULSAR_ENTRY_POINT" \
-                                      --memory="$PULSAR_MEMORY" \
-                                      --runtime="$PULSAR_RUNTIME" \
-                                      --source="$PULSAR_GCS_SOURCE_PATH" \
-                                      --trigger-topic="$PULSAR_TOPIC" \
-                                      --timeout="$PULSAR_TIMEOUT" \
-                                      --min-instances="$PULSAR_MIN_INSTANCE" \
-                                      --max-instances="$PULSAR_MAX_INSTANCE" \
-                                      --no-allow-unauthenticated
+      #------------  Deploy function
+      read -p "--> Do you want to create a new Cloud Function? [Y/y or N/n]: " -n 1 -r
+      echo
+      if [[ $REPLY =~ ^[Yy]$ ]]
+      then
+          echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$PULSAR_REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$PULSAR_GCS_SOURCE_PATH"
+          gcloud beta functions deploy "$PULSAR_NAME" \
+                                  --gen2 \
+                                  --region="$REGION" \
+                                  --service-account="$PULSAR_SERVICE_ACCOUNT" \
+                                  --entry-point="$PULSAR_ENTRY_POINT" \
+                                  --memory="$PULSAR_MEMORY" \
+                                  --runtime="$PULSAR_RUNTIME" \
+                                  --source="$PULSAR_GCS_SOURCE_PATH" \
+                                  --trigger-topic="$PULSAR_TOPIC" \
+                                  --timeout="$PULSAR_TIMEOUT" \
+                                  --min-instances="$PULSAR_MIN_INSTANCE" \
+                                  --max-instances="$PULSAR_MAX_INSTANCE" \
+                                  --no-allow-unauthenticated
 
 
-              echo "---> The new cumulus Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"
-          fi
+          echo "---> The new cumulus Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"
+      fi
+
+      echo "---> Trying to remove cloud function zip from the bucket and local folder... "
+      gsutil rm $PULSAR_GCS_SOURCE_PATH
+      # Removing the archive
+      rm "../$PULSAR_ZIP"
   else
-      echo "---> The existing cloud function is not deleted"
+      echo "---> The existing cloud function is not deleted"Test
   fi
 
-  echo "---> Trying to remove cloud function zip from the bucket and local folder... "
-  gsutil rm $PULSAR_GCS_SOURCE_PATH
-  rm $PULSAR_ZIP
+  #------------------- E - Deploy Cloud Scheduler Sample  ---------------------------------------------------------
+  read -p "--->> Do you want to deploy the Cloud Scheduler sample? [Y/y or N/n]: " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+      echo "---> Loading Cloud Scheduler sample configurations in path $PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE"
+      MESSAGE_BODY=`cat "../$PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE"`
+      echo "$MESSAGE_BODY"
+
+
+      #---------------- - Try to delete scheduler if exist and create new one
+      echo "---> Trying to delete existing scheduler... "
+      gcloud beta scheduler jobs delete "$PULSAR_TASK_SAMPLE_NAME"
+
+      #Create scheduler
+      echo "---> Scheduling the task JSON with the cron $PULSAR_TASK_SAMPLE_CRON"
+      gcloud beta scheduler jobs create pubsub "$PULSAR_TASK_SAMPLE_NAME" \
+                                              --location="$REGION" \
+                                              --schedule="$PULSAR_TASK_SAMPLE_CRON" \
+                                              --topic="$PULSAR_TOPIC" \
+                                              --message-body="$MESSAGE_BODY"
+
+  else
+      echo "---> The Cloud Scheduler sample is not deployed"
+  fi
+
+  #------------------------------ F - Create default tables schema for Pulsar BigQuery------------------
+  read -p "--->> Do you want to create the default BigQuery Pulsar analytics tables (tasked, initiated, processed, terminated)? [Y/y or N/n]: " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+      current_table_date=$(date +"%Y%m%d")
+
+      # Create the Pulsar dataset if not exist
+      echo "---> Creating the BigQuery dataset $PULSAR_NAME if not exist"
+      bq --location="$REGION" mk -d \
+      --description "Pulsar analytical logs." \
+      "$PULSAR_NAME"
+
+      # Create tasked default table if not exist
+      echo "---> Creating empty tasked tasks table if not exist"
+      bq mk --table --description "The Pulsar tasked tasks default table" "$PROJECT_ID:$PULSAR_NAME.tasked_$current_table_date" "$TASK_SCHEMA"
+
+      # Create initiated default table if not exist
+      echo "---> Creating empty initiated tasks table if not exist"
+      bq mk --table --description "The Pulsar tasks initiated default table" "$PROJECT_ID:$PULSAR_NAME.initiated_$current_table_date" "$TASK_SCHEMA"
+
+      # Create processed default table if not exist
+      echo "---> Creating empty processed tasks table if not exist"
+      bq mk --table --description "The Pulsar processed tasks default table" "$PROJECT_ID:$PULSAR_NAME.processed_$current_table_date" "$TASK_SCHEMA"
+
+      # Create terminated default table if not exist
+      echo "---> Creating empty terminated tasks table if not exist"
+      bq mk --table --description "The Pulsar terminated tasks default table" "$PROJECT_ID:$PULSAR_NAME.terminated_$current_table_date" "$TASK_SCHEMA"
+
+  else
+      echo "---> The deployment don't create default Pulsar BigQuery tables"
+  fi
 
 
 else

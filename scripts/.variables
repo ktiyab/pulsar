@@ -1,0 +1,39 @@
+# Environment file for GCP deployment
+
+
+#--- Cloud Function default parameters
+
+# Name
+PULSAR_NAME="pulsar"
+# Zip
+PULSAR_ZIP="pulsar.zip"
+# Local folder
+PULSAR_FOLDER="app"
+
+# Region
+PULSAR_REGION="europe-west1"
+
+# Run entry point
+PULSAR_ENTRY_POINT="pulse"
+PULSAR_MEMORY="512M"
+PULSAR_RUNTIME="python39"
+
+# Please check pricing https://cloud.google.com/functions/pricing
+# By default 10min (600000 ms)
+# Cost for 512MB per run = 0,000000925*600000/100 = $0.00555
+# Max run time of a CF 2nd Gen is 1h but we don't want to exceed 10min
+PULSAR_TIMEOUT="540s"
+
+PULSAR_MIN_INSTANCE="0"
+PULSAR_MAX_INSTANCE="100"
+
+#--- PubSub default parameters
+PULSAR_TOPIC="pulsar-topic"
+
+#--- Storage bucket name
+PULSAR_BUCKET_ID_SUFFIX="-pulsar"
+
+#--- Secret Manager
+PULSAR_SECRETS_FOLDER="secrets"
+PULSAR_SECRETS_EXT=".json"
+

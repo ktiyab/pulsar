@@ -1,0 +1,2 @@
+This folder purpose is to keep secrets you want to create/synchronize white GCP Secret Manager.
+You have to write your secret as a json file (.json) which will be automatically found by de deployment process.

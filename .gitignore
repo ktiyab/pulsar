@@ -1,0 +1,8 @@
+venv
+.idea
+resources
+secrets/*.json
+terraform/.terraform
+terraform/.terraform.lock.hcl
+Tests/services-accounts/*.json
+*.zip

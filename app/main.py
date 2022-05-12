@@ -6,10 +6,12 @@
 import json
 import os
 import base64
-import logging
-import globals as globals_configs
 
-# -- -- Imports the Google Cloud Loging client library
+import globals_configs
+import secrets_configs
+
+# -- -- Configuring the Google Cloud Loging client library
+import logging
 import google.cloud.logging
 dir_path = os.path.dirname(os.path.realpath(__file__))
 # Instantiates logger client
@@ -19,6 +21,7 @@ log_handler = logging_client.get_default_handler()
 logging.basicConfig()
 logger = logging.getLogger('logger')
 logger.addHandler(log_handler)
+# -------------------------------------------------------
 
 # Get default configs
 globals_configs.DEFAULT_PROJECT_ID = os.getenv("GCP_PROJECT")
@@ -38,7 +41,8 @@ def run(event, context):
     globals_configs.PUB_SUB_MESSAGE_ID = context.event_id
     event_data = decode_event_data(event)
 
-    print(event_data)
+    # Always return the event_id  and the task
+    return context.event_id, event_data
 
 # -- Decode data passed to the Cloud function
 def decode_event_data(event):

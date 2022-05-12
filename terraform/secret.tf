@@ -8,6 +8,7 @@ locals {
 # Create a secret for each json file
 resource "google_secret_manager_secret" "pulsar_secret" {
   provider = google-beta
+  project = var.PROJECT_ID
 
   for_each = { for f in local.json_data : f.id => f }
   secret_id = each.value.id

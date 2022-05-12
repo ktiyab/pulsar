@@ -47,7 +47,7 @@ variable "PULSAR_REGION" {
 
   validation {
     condition = length(var.PULSAR_REGION)==12 && substr(var.PULSAR_REGION, 0, 11)=="europe-west"
-    error_message = "Please provide a valid value for the Cloud Function region (europe-westx)."
+    error_message = "Please provide a valid value for the Cloud Function region (europe-westX)."
   }
 }
 
@@ -150,4 +150,88 @@ variable "PULSAR_SECRETS_EXT" {
   type = string
   description = "Secret files extension"
   default = ".json"
+}
+
+variable "PULSAR_TASKS_FOLDER" {
+  type = string
+  description = "Cloud Scheduler tasks folder"
+  default = "tasks"
+}
+
+variable "PULSAR_TASK_SAMPLE_JSON" {
+  type = string
+  description = "Cloud Scheduler sample task local file name"
+  default = "sample.json"
+}
+
+variable "PULSAR_TASK_SAMPLE_NAME" {
+  type = string
+  description = "Cloud Scheduler sample task job name"
+  default = "pulsar_sample"
+}
+
+variable "PULSAR_TASK_SAMPLE_DESCRIPTION" {
+  type = string
+  description = "Cloud Scheduler sample task job name"
+  default = "pulsar_sample"
+}
+
+variable "PULSAR_TASK_SAMPLE_CRON" {
+  type = string
+  description = "Cloud Scheduler sample task cron"
+  default = "1 1 1 1 1"
+}
+
+variable "PULSAR_DATASET_DESCRIPTION" {
+  type = string
+  description = "BigQuery dataset description."
+  default = "Pulsar analytical logs."
+}
+
+variable "PULSAR_TASKED_TABLE_NAME" {
+  type = string
+  description = "The Pulsar tasked table name."
+  default = "tasked"
+}
+
+variable "PULSAR_TASKED_TABLE_DESCRIPTION" {
+  type = string
+  description = "The Pulsar tasked tasks default table."
+  default = "The Pulsar tasked tasks table."
+}
+
+variable "PULSAR_INITIATED_TABLE_NAME" {
+  type = string
+  description = "The Pulsar initiated table name."
+  default = "initiated"
+}
+
+variable "PULSAR_INITIATED_TABLE_DESCRIPTION" {
+  type = string
+  description = "The Pulsar tasks initiated default table."
+  default = "The Pulsar initiated tasks table."
+}
+
+variable "PULSAR_PROCESSED_TABLE_NAME" {
+  type = string
+  description = "The Pulsar processed table name."
+  default = "processed"
+}
+
+variable "PULSAR_PROCESSED_TABLE_DESCRIPTION" {
+  type = string
+  description = "The Pulsar processed tasks table description."
+  default = "The Pulsar processed tasks table."
+}
+
+variable "PULSAR_TERMINATED_TABLE_NAME" {
+  type = string
+  description = "The Pulsar terminated table name."
+  default = "terminated"
+}
+
+variable "PULSAR_TERMINATED_TABLE_DESCRIPTION" {
+  type = string
+  description = "The Pulsar terminated tasks table description."
+  default = "The Pulsar terminated tasks table."
 }

@@ -4,5 +4,6 @@ resources
 secrets/*.json
 terraform/.terraform
 terraform/.terraform.lock.hcl
+terraform/terraform*
 Tests/services-accounts/*.json
 *.zip

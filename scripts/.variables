@@ -36,12 +36,27 @@ PULSAR_BUCKET_ID_SUFFIX="-"$PULSAR_NAME
 #--- Secret Manager
 PULSAR_SECRETS_FOLDER="secrets"
 PULSAR_SECRETS_EXT=".json"
+PULSAR_SECRETS_PY_ROOT_PATH="/app/secrets_configs.py"
 
 # --- Scheduler Tasks
 PULSAR_TASKS_FOLDER="tasks"
-PULSAR_TASK_SAMPLE="sample.json"
+PULSAR_TASK_SAMPLE_JSON="sample.json"
 PULSAR_TASK_SAMPLE_NAME="pulsar_sample"
+PULSAR_TASK_SAMPLE_DESCRIPTION="A sample of a Pulsar task"
 PULSAR_TASK_SAMPLE_CRON="1 1 1 1 1"
 
 # BigQuery table
-TASK_SCHEMA="task_id:STRING,task_state:STRING,task_notifier:STRING,task_owners:STRING,task_project_id:STRING,task_region:STRING,task_parameter:STRING,task_timestamp:STRING,task_success:STRING,task_message:STRING"
+PULSAR_TASKED_TABLE_NAME="tasked"
+PULSAR_TASKED_TABLE_DESCRIPTION="The Pulsar tasked tasks table."
+
+PULSAR_INITIATED_TABLE_NAME="initiated"
+PULSAR_INITIATED_TABLE_DESCRIPTION="The Pulsar initiated tasks table."
+
+PULSAR_PROCESSED_TABLE_NAME="processed"
+PULSAR_PROCESSED_TABLE_DESCRIPTION="The Pulsar processed tasks table."
+
+PULSAR_TERMINATED_TABLE_NAME="terminated"
+PULSAR_TERMINATED_TABLE_DESCRIPTION="The Pulsar terminated tasks table."
+
+PULSAR_DATASET_DESCRIPTION="Pulsar analytical logs."
+PULSAR_TASK_SCHEMA="task_id:STRING,task_state:STRING,task_notifier:STRING,task_owners:STRING,task_project_id:STRING,task_region:STRING,task_parameters:STRING,task_timestamp:STRING,task_success:STRING,task_message:STRING"

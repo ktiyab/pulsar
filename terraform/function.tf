@@ -1,6 +1,6 @@
 # Build bucket name
 locals {
-  PULSAR_BUCKET_NAME = "${var.PROJECT_ID}${var.PULSAR_BUCKET_ID_SUFFIX}"
+  SERVICE_ACCOUNT_EMAIL="${var.SERVICE_ACCOUNT_EMAIL}"
 }
 # Creating Cloud Function Zip file
 data "archive_file" "pulsar_zip" {
@@ -23,6 +23,7 @@ resource "google_storage_bucket_object" "pulsar_gcs_zip" {
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloudfunctions2_function
 resource "google_cloudfunctions2_function" "pulsar_function" {
   provider = google-beta
+  project = var.PROJECT_ID
   name = var.PULSAR_NAME
   location=var.PULSAR_REGION
 
@@ -43,14 +44,17 @@ resource "google_cloudfunctions2_function" "pulsar_function" {
     min_instance_count = var.PULSAR_MIN_INSTANCE
     available_memory    = var.PULSAR_MEMORY
     timeout_seconds     = var.PULSAR_TIMEOUT
-    service_account_email = var.SERVICE_ACCOUNT_EMAIL
+    #service_account_email = local.SERVICE_ACCOUNT_EMAIL
     ingress_settings = "ALLOW_INTERNAL_ONLY"
+    all_traffic_on_latest_revision = true
   }
 
-  event_trigger {
-    event_type = "google.cloud.pubsub.topic.v1.messagePublished"
-    pubsub_topic = google_pubsub_topic.pulsar_topic.name
-  }
+  #event_trigger {
+  #  trigger_region = var.PULSAR_REGION
+  #  event_type = "google.cloud.pubsub.topic.v1.messagePublished"
+  #  pubsub_topic = google_pubsub_topic.pulsar_topic.id
+  #  retry_policy = "RETRY_POLICY_RETRY"
+  #}
 
   depends_on = [google_storage_bucket_object.pulsar_gcs_zip, google_pubsub_topic.pulsar_topic]
 }

@@ -26,7 +26,7 @@ if [ -z "$1" ]
     echo "---> Project ID is not provided, please provide valid one for the deployment;"
     exit 1
   else
-    echo "---> The app will be deployed in GCP project: "$1
+    echo "---> The app will be deployed in GCP project: $1"
     PROJECT_ID=$1
 fi
 
@@ -36,7 +36,7 @@ if [ -z "$2" ]
     echo "---> Service account email is not provided, please provide valid one for the deployment;"
     exit 1
   else
-    echo "---> The app will use the service account email: "$2
+    echo "---> The app will use the service account email: $2"
     SERVICE_ACCOUNT_EMAIL=$2
 fi
 
@@ -44,9 +44,9 @@ fi
 REGION=$PULSAR_REGION
 if [ -z "$3" ]
   then
-    echo "---> No custom region is specified, the deployment will use the default one: "$PULSAR_REGION
+    echo "---> No custom region is specified, the deployment will use the default one: $PULSAR_REGION"
   else
-    echo "---> Custom region is specified, the deployment will use region: "$3
+    echo "---> Custom region is specified, the deployment will use region: $3"
     REGION=$3
 fi
 
@@ -55,13 +55,16 @@ fi
 PULSAR_BUCKET_NAME=$PROJECT_ID$PULSAR_BUCKET_ID_SUFFIX
 
 # Default resources paths
-PULSAR_BUCKET_NAME_PATH="gs://"$PULSAR_BUCKET_NAME"/"
+PULSAR_BUCKET_NAME_PATH="gs://$PULSAR_BUCKET_NAME/"
 PULSAR_GCS_SOURCE_PATH=$PULSAR_BUCKET_NAME_PATH$PULSAR_ZIP
 
 
 # Notification
 # Show deployment project
+echo "You current project is"
+echo "---------------------------------------------------- ----------------------------------------------------"
 gcloud config configurations list
+echo "---------------------------------------------------- ----------------------------------------------------"
 echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$SOURCE in the project ID $PROJECT_ID"
 read -p "---> Continue? [Y/y or N/n]: " -n 1 -r
 echo
@@ -80,27 +83,27 @@ then
     echo "---> Creating the Cloud functions ZIP file..."
 
     # Removing existing zip
-    rm $PULSAR_ZIP
-    cd "$PULSAR_FOLDER"
+    rm "$PULSAR_ZIP"
+    cd "$PULSAR_FOLDER" || return
 
     # Write new version date
-    echo 'Pulsar build of: '$(date +"%m/%d/%Y") > README.txt
-    zip -r "../$PULSAR_ZIP" *
+    echo "Pulsar build of: $(date +"%m/%d/%Y")" > README.txt
+    zip -r "../$PULSAR_ZIP" ./*
 
     # --  --  --  --  --  -- A1 - Create buckets if not exist --  --  --  --  --  -- --  --  --  --  --  --
     echo "---> Creating the default GCS bucket $PULSAR_BUCKET_NAME if not exist..."
     # Root folder
     cd ..
-    gsutil mb -l $REGION $PULSAR_BUCKET_NAME_PATH
+    gsutil mb -l "$REGION" "$PULSAR_BUCKET_NAME_PATH"
 
     # Copy function to bucket
     echo "---> Trying to delete existing cloud function zip in the bucket... "
-    gsutil rm $PULSAR_GCS_SOURCE_PATH
+    gsutil rm "$PULSAR_GCS_SOURCE_PATH"
     echo "---> Copying the cloud function to the bucket..."
     gsutil cp "$PULSAR_ZIP" "$PULSAR_BUCKET_NAME_PATH"
 
     # Moving cursor to original position
-    cd ./scripts
+    cd ./scripts || return
   else
     echo "---> Using existing Cloud Storage configurations and files"
   fi
@@ -134,7 +137,7 @@ then
       echo "---> Creating non existing secrets"
 
       # -- -- Loop secret folder and load files content into secret manager
-      for filename in ../$PULSAR_SECRETS_FOLDER/*$PULSAR_SECRETS_EXT; do
+      for filename in ../"$PULSAR_SECRETS_FOLDER"/*"$PULSAR_SECRETS_EXT"; do
           [ -e "$filename" ] || continue
 
           # Clean and extract secret name
@@ -143,14 +146,14 @@ then
           secret_name="${filename//.json}"
           secret_name="${secret_name//"../$PULSAR_SECRETS_FOLDER/"}"
           echo "Secret name is $secret_name"
-          existing_secret=$(gcloud secrets list --filter=$secret_name)
+          existing_secret=$(gcloud secrets list --filter="$secret_name")
           echo "Found $existing_secret"
 
           # If value secret doesn't exist create it
           if [[ $existing_secret == "" ]]; then
             echo "--> Create new secret with name $secret_name"
-            gcloud secrets create $secret_name --replication-policy="automatic"
-            gcloud secrets versions add $secret_name --data-file=$filename
+            gcloud secrets create "$secret_name" --replication-policy="automatic"
+            gcloud secrets versions add "$secret_name" --data-file="$filename"
           else
             echo "--> The secret exist, you can update automatically the secret in next step."
           fi
@@ -163,9 +166,16 @@ then
     if [[ $REPLY =~ ^[Yy]$ ]]
     then
       pwd
+      # Remove old reference
+      echo "---> Removing old secret reference"
+      rm .."$PULSAR_SECRETS_PY_ROOT_PATH"
+      # Create empty file and add python encoding
+      touch .."$PULSAR_SECRETS_PY_ROOT_PATH"
+      echo "# -*- coding: utf-8 -*-" > .."$PULSAR_SECRETS_PY_ROOT_PATH"
+
       echo "---> Creating new version of existing secrets"
       # -- -- Loop secret folder and load files content into secret manager
-      for filename in ../$PULSAR_SECRETS_FOLDER/*$PULSAR_SECRETS_EXT; do
+      for filename in ../"$PULSAR_SECRETS_FOLDER"/*"$PULSAR_SECRETS_EXT"; do
           [ -e "$filename" ] || continue
 
           # Clean and extract secret name
@@ -175,12 +185,16 @@ then
           secret_name="${secret_name//"../$PULSAR_SECRETS_FOLDER/"}"
 
           # If value secret doesn't exist create it
-          gcloud secrets versions add $secret_name --data-file=$filename
+          echo "gcloud secrets versions add "$secret_name" --data-file=$filename"
+          gcloud secrets versions add "$secret_name" --data-file="$filename"
+
+          # Adding secrets to configs file
+          echo "---> Building new secret reference for cloud functions..."
+          echo "${secret_name^^}=\"$secret_name\"" >> .."$PULSAR_SECRETS_PY_ROOT_PATH"
 
           echo "---------------------------------"
       done
     fi
-
   else
     echo "---> The existing Cloud Secret Manager items will be used"
   fi
@@ -208,7 +222,7 @@ then
       gcloud beta functions deploy "$PULSAR_NAME" \
                               --gen2 \
                               --region="$REGION" \
-                              --service-account="$PULSAR_SERVICE_ACCOUNT" \
+                              --service-account="$SERVICE_ACCOUNT_EMAIL" \
                               --entry-point="$PULSAR_ENTRY_POINT" \
                               --memory="$PULSAR_MEMORY" \
                               --runtime="$PULSAR_RUNTIME" \
@@ -224,7 +238,7 @@ then
     fi
 
     echo "---> Trying to remove cloud function zip from the bucket and local folder... "
-    gsutil rm $PULSAR_GCS_SOURCE_PATH
+    gsutil rm "$PULSAR_GCS_SOURCE_PATH"
     # Removing the archive
     rm "../$PULSAR_ZIP"
   else
@@ -237,8 +251,8 @@ then
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
     pwd
-    echo "---> Loading Cloud Scheduler sample configurations in path $PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE"
-    MESSAGE_BODY=`cat "../$PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE"`
+    echo "---> Loading Cloud Scheduler sample configurations in path $PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE_JSON"
+    MESSAGE_BODY=$(cat "../${PULSAR_TASKS_FOLDER}/${PULSAR_TASK_SAMPLE_JSON}")
     echo "$MESSAGE_BODY"
 
 
@@ -250,6 +264,7 @@ then
     # Create scheduler
     echo "---> Scheduling the task JSON with the cron $PULSAR_TASK_SAMPLE_CRON"
     gcloud beta scheduler jobs create pubsub "$PULSAR_TASK_SAMPLE_NAME" \
+                                            --description="$PULSAR_TASK_SAMPLE_DESCRIPTION" \
                                             --location="$REGION" \
                                             --schedule="$PULSAR_TASK_SAMPLE_CRON" \
                                             --topic="$PULSAR_TOPIC" \
@@ -270,24 +285,24 @@ then
     # Create the Pulsar dataset if not exist
     echo "---> Creating the BigQuery dataset $PULSAR_NAME if not exist"
     bq --location="$REGION" mk -d \
-    --description "Pulsar analytical logs." \
+    --description "$PULSAR_DATASET_DESCRIPTION" \
     "$PULSAR_NAME"
 
     # Create tasked default table if not exist
     echo "---> Creating empty tasked tasks table if not exist"
-    bq mk --table --description "The Pulsar tasked tasks default table" "$PROJECT_ID:$PULSAR_NAME.tasked_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_TASKED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_TASKED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
 
     # Create initiated default table if not exist
     echo "---> Creating empty initiated tasks table if not exist"
-    bq mk --table --description "The Pulsar tasks initiated default table" "$PROJECT_ID:$PULSAR_NAME.initiated_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_INITIATED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_INITIATED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
 
     # Create processed default table if not exist
     echo "---> Creating empty processed tasks table if not exist"
-    bq mk --table --description "The Pulsar processed tasks default table" "$PROJECT_ID:$PULSAR_NAME.processed_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_PROCESSED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_PROCESSED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
 
     # Create terminated default table if not exist
     echo "---> Creating empty terminated tasks table if not exist"
-    bq mk --table --description "The Pulsar terminated tasks default table" "$PROJECT_ID:$PULSAR_NAME.terminated_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_TERMINATED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_TERMINATED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
 
   else
     echo "---> The deployment don't create default Pulsar BigQuery tables"

@@ -13,7 +13,6 @@ import secrets_configs
 # -- -- Configuring the Google Cloud Loging client library
 import logging
 import google.cloud.logging
-dir_path = os.path.dirname(os.path.realpath(__file__))
 # Instantiates logger client
 logging_client = google.cloud.logging.Client()
 # Connects the logger to the root logging handler; by default this captures all logs at INFO level and higher
@@ -31,10 +30,9 @@ globals_configs.DEFAULT_SERVICE_ACCOUNT = os.getenv("FUNCTION_IDENTITY")
 # -- Main run function
 def run(event, context):
     """
-
     :param event:
     :param context:
-    :return:
+    :return: Tuple (event_id, event_data)
     """
 
     # Extract pubsub event ID and Data
@@ -55,7 +53,7 @@ def decode_event_data(event):
     if 'data' in event:
         # Get json string
         json_data = base64.b64decode(event['data']).decode('utf-8')
-        logger.info("----> Event " + str(json_data))
+        logger.info("----> Decoded data: " + str(json_data))
         # Json string to object
         return load_json_data(json_data)
 
@@ -66,7 +64,7 @@ def load_json_data(json_string):
     :param json_string:
     :return: json object or None
     """
-    logger.info("----> Running load_json_data")
+    logger.info("----> Running load_json_data.")
     try:
         json_object = json.loads(json_string)
         return json_object

@@ -30,12 +30,7 @@ variable "PULSAR_NAME" {
 variable "PULSAR_ZIP" {
   type = string
   description = "The name of the local zip of the Cloud Function and in the Cloud Storage"
-  default = "pulsar.zip"
-
-  validation {
-    condition = length(var.PULSAR_ZIP) > 8 && substr(var.PULSAR_ZIP, -4, -1)==".zip"
-    error_message = "Please provide a valid value for the Cloud Function zip file (xxxx.zip)."
-  }
+  default = "zip"
 }
 
 # Cloud Function 2nd Gen is available in only few regions https://cloud.google.com/functions/docs/2nd-gen/overview
@@ -44,22 +39,12 @@ variable "PULSAR_REGION" {
   type = string
   description = "The region in which the Cloud Function will be deployed"
   default = "europe-west1"
-
-  validation {
-    condition = length(var.PULSAR_REGION)==12 && substr(var.PULSAR_REGION, 0, 11)=="europe-west"
-    error_message = "Please provide a valid value for the Cloud Function region (europe-westX)."
-  }
 }
 
 variable "PULSAR_ENTRY_POINT" {
   type = string
   description = "The Cloud Function entry point"
   default = "pulse"
-
-  validation {
-    condition = length(var.PULSAR_ENTRY_POINT) > 4
-    error_message = "Please provide a valid value for the Cloud Function name (length>4)."
-  }
 }
 
 # Memory must be >= to 256
@@ -123,21 +108,15 @@ variable "PULSAR_MAX_INSTANCE" {
 }
 
 # Topic name must start with Pulsar allowing to identify topic
-variable "PULSAR_TOPIC" {
+variable "PULSAR_TOPIC_SUFFIX" {
   type = string
-  description = "The name of the topic dedicated to the Cloud Function"
-  default = "pulsar-topic"
+  description = "The suffix of the topic name dedicated to the Cloud Function"
+  default = "-topic"
 
   validation {
-    condition = length(var.PULSAR_TOPIC)>0
+    condition = length(var.PULSAR_TOPIC_SUFFIX)>0
     error_message = "Please provide a valid name for topic (PULSAR_NAME-topic)."
   }
-}
-
-variable "PULSAR_BUCKET_ID_SUFFIX" {
-  type = string
-  description = "The suffix of the pulsar bucket name. The prefix must be the GCP project name"
-  default = "-pulsar"
 }
 
 variable "PULSAR_SECRETS_FOLDER" {
@@ -164,16 +143,16 @@ variable "PULSAR_TASK_SAMPLE_JSON" {
   default = "sample.json"
 }
 
-variable "PULSAR_TASK_SAMPLE_NAME" {
+variable "PULSAR_TASK_SAMPLE_NAME_SUFFIX" {
   type = string
-  description = "Cloud Scheduler sample task job name"
-  default = "pulsar_sample"
+  description = "Cloud Scheduler sample task job name suffix"
+  default = "_sample"
 }
 
 variable "PULSAR_TASK_SAMPLE_DESCRIPTION" {
   type = string
   description = "Cloud Scheduler sample task job name"
-  default = "pulsar_sample"
+  default = " job sample"
 }
 
 variable "PULSAR_TASK_SAMPLE_CRON" {
@@ -185,7 +164,7 @@ variable "PULSAR_TASK_SAMPLE_CRON" {
 variable "PULSAR_DATASET_DESCRIPTION" {
   type = string
   description = "BigQuery dataset description."
-  default = "Pulsar analytical logs."
+  default = " analytical logs."
 }
 
 variable "PULSAR_TASKED_TABLE_NAME" {
@@ -197,7 +176,7 @@ variable "PULSAR_TASKED_TABLE_NAME" {
 variable "PULSAR_TASKED_TABLE_DESCRIPTION" {
   type = string
   description = "The Pulsar tasked tasks default table."
-  default = "The Pulsar tasked tasks table."
+  default = " tasked tasks table."
 }
 
 variable "PULSAR_INITIATED_TABLE_NAME" {
@@ -209,7 +188,7 @@ variable "PULSAR_INITIATED_TABLE_NAME" {
 variable "PULSAR_INITIATED_TABLE_DESCRIPTION" {
   type = string
   description = "The Pulsar tasks initiated default table."
-  default = "The Pulsar initiated tasks table."
+  default = " initiated tasks table."
 }
 
 variable "PULSAR_PROCESSED_TABLE_NAME" {
@@ -221,7 +200,7 @@ variable "PULSAR_PROCESSED_TABLE_NAME" {
 variable "PULSAR_PROCESSED_TABLE_DESCRIPTION" {
   type = string
   description = "The Pulsar processed tasks table description."
-  default = "The Pulsar processed tasks table."
+  default = " processed tasks table."
 }
 
 variable "PULSAR_TERMINATED_TABLE_NAME" {
@@ -233,5 +212,5 @@ variable "PULSAR_TERMINATED_TABLE_NAME" {
 variable "PULSAR_TERMINATED_TABLE_DESCRIPTION" {
   type = string
   description = "The Pulsar terminated tasks table description."
-  default = "The Pulsar terminated tasks table."
+  default = " terminated tasks table."
 }

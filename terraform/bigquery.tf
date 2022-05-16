@@ -1,5 +1,11 @@
 locals {
   PULSAR_NAME = var.PULSAR_NAME
+  PULSAR_DATASET_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_DATASET_DESCRIPTION}"
+  PULSAR_TASKED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_TASKED_TABLE_DESCRIPTION}"
+  PULSAR_INITIATED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_INITIATED_TABLE_DESCRIPTION}"
+  PULSAR_PROCESSED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_PROCESSED_TABLE_DESCRIPTION}"
+  PULSAR_TERMINATED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_TERMINATED_TABLE_DESCRIPTION}"
+
   CURRENT_DATE = formatdate("YYYYMMDD", timestamp())
 PULSAR_TASK_SCHEMA= <<EOF
 [
@@ -55,7 +61,7 @@ EOF
 resource "google_bigquery_dataset" "pulsar_dataset" {
   dataset_id                  = local.PULSAR_NAME
   friendly_name               = local.PULSAR_NAME
-  description                 = var.PULSAR_DATASET_DESCRIPTION
+  description                 = local.PULSAR_DATASET_DESCRIPTION
   location                    = var.PULSAR_REGION
 }
 
@@ -63,7 +69,7 @@ resource "google_bigquery_dataset" "pulsar_dataset" {
 resource "google_bigquery_table" "pulsar_table_tasked" {
   dataset_id = google_bigquery_dataset.pulsar_dataset.dataset_id
   table_id   = "${var.PULSAR_TASKED_TABLE_NAME}_${local.CURRENT_DATE}"
-  description = var.PULSAR_TASKED_TABLE_DESCRIPTION
+  description = local.PULSAR_TASKED_TABLE_DESCRIPTION
 
   schema = local.PULSAR_TASK_SCHEMA
 
@@ -71,7 +77,7 @@ resource "google_bigquery_table" "pulsar_table_tasked" {
 resource "google_bigquery_table" "pulsar_table_initiated" {
   dataset_id = google_bigquery_dataset.pulsar_dataset.dataset_id
   table_id   = "${var.PULSAR_INITIATED_TABLE_NAME}_${local.CURRENT_DATE}"
-  description = var.PULSAR_INITIATED_TABLE_DESCRIPTION
+  description = local.PULSAR_INITIATED_TABLE_DESCRIPTION
 
   schema = local.PULSAR_TASK_SCHEMA
 
@@ -79,7 +85,7 @@ resource "google_bigquery_table" "pulsar_table_initiated" {
 resource "google_bigquery_table" "pulsar_table_processed" {
   dataset_id = google_bigquery_dataset.pulsar_dataset.dataset_id
   table_id   = "${var.PULSAR_PROCESSED_TABLE_NAME}_${local.CURRENT_DATE}"
-  description = var.PULSAR_PROCESSED_TABLE_DESCRIPTION
+  description = local.PULSAR_PROCESSED_TABLE_DESCRIPTION
 
   schema = local.PULSAR_TASK_SCHEMA
 
@@ -87,7 +93,7 @@ resource "google_bigquery_table" "pulsar_table_processed" {
 resource "google_bigquery_table" "pulsar_table_terminated" {
   dataset_id = google_bigquery_dataset.pulsar_dataset.dataset_id
   table_id   = "${var.PULSAR_TERMINATED_TABLE_NAME}_${local.CURRENT_DATE}"
-  description = var.PULSAR_TERMINATED_TABLE_DESCRIPTION
+  description = local.PULSAR_TERMINATED_TABLE_DESCRIPTION
 
   schema = local.PULSAR_TASK_SCHEMA
 

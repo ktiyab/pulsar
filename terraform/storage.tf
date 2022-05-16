@@ -1,6 +1,6 @@
 # Build bucket name
 locals {
-  PULSAR_BUCKET_NAME = "${var.PROJECT_ID}${var.PULSAR_BUCKET_ID_SUFFIX}"
+  PULSAR_BUCKET_NAME = "${var.PROJECT_ID}-${var.PULSAR_NAME}"
 }
 # Create the pulsar bucket in a specific region
 resource "google_storage_bucket" "pulsar_bucket" {

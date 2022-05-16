@@ -1,12 +1,13 @@
 # Build bucket name
 locals {
   SERVICE_ACCOUNT_EMAIL="${var.SERVICE_ACCOUNT_EMAIL}"
+  PULSAR_ZIP = "${var.PULSAR_NAME}.${var.PULSAR_ZIP}"
 }
 # Creating Cloud Function Zip file
 data "archive_file" "pulsar_zip" {
-  type        = "zip"
+  type        = var.PULSAR_ZIP
   source_dir = "../app"
-  output_path = "../${var.PULSAR_ZIP}"
+  output_path = "../${local.PULSAR_ZIP}"
 }
 
 # Load zip file into Pulsar bucket
@@ -15,7 +16,7 @@ resource "google_storage_bucket_object" "pulsar_gcs_zip" {
   bucket       = google_storage_bucket.pulsar_bucket.name
   source = data.archive_file.pulsar_zip.output_path
   content_type = "application/zip"
-  name         = var.PULSAR_ZIP
+  name         = local.PULSAR_ZIP
   depends_on = [google_storage_bucket.pulsar_bucket, data.archive_file.pulsar_zip]
 }
 

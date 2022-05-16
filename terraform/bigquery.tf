@@ -1,4 +1,5 @@
 locals {
+  PULSAR_NAME = var.PULSAR_NAME
   CURRENT_DATE = formatdate("YYYYMMDD", timestamp())
 PULSAR_TASK_SCHEMA= <<EOF
 [
@@ -52,8 +53,8 @@ EOF
 }
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset
 resource "google_bigquery_dataset" "pulsar_dataset" {
-  dataset_id                  = var.PULSAR_NAME
-  friendly_name               = var.PULSAR_NAME
+  dataset_id                  = local.PULSAR_NAME
+  friendly_name               = local.PULSAR_NAME
   description                 = var.PULSAR_DATASET_DESCRIPTION
   location                    = var.PULSAR_REGION
 }

@@ -2,6 +2,7 @@ venv*
 .idea
 resources
 secrets/*.json
+terraform/
 terraform/.terraform
 terraform/.terraform.lock.hcl
 terraform/terraform*

@@ -8,11 +8,24 @@
 # Cloud function https://cloud.google.com/sdk/gcloud/reference/functions/deploy
 # Topic https://cloud.google.com/sdk/gcloud/reference/pubsub/topics/create
 
-# Deployment command: ./deploy.sh "<PROJECT-ID>" "<EXISTING-SERVICE-ACCOUNT-EMAIL>" "<REGION>"
+# Deployment command: ./deploy.sh "<NAME>" "<PROJECT-ID>" "<REGION>" "<EXISTING-SERVICE-ACCOUNT-EMAIL>"
 
 # --  --  --  --  --  --  Deployment of the Cloud Function Skeleton and his PubSub topic --  --  --  --  --  --
 # --  --  PARAMETERS CHECKS  --  --
-# -- Check if .env file exists, and load default configurations
+# -- The default name of the app --
+PULSAR_NAME="pulsar"
+
+# -- Check if user provide a name for the app
+if [ -z "$1" ]
+  then
+    echo "---> App name is not provided, the default app name will be: $PULSAR_NAME"
+  else
+    echo "---> The provided app name is: $1"
+    PULSAR_NAME=$1
+fi
+
+# -- Check if .env file exists, and load default configurations --
+# -- Build also services name by using app name as prefix --
 if [ -e .variables ]; then
     source .variables
 else
@@ -21,23 +34,13 @@ else
 fi
 
 # -- Check if project ID is set
-if [ -z "$1" ]
+if [ -z "$2" ]
   then
     echo "---> Project ID is not provided, please provide valid one for the deployment;"
     exit 1
   else
-    echo "---> The app will be deployed in GCP project: $1"
-    PROJECT_ID=$1
-fi
-
-# -- Check if service account email is set
-if [ -z "$2" ]
-  then
-    echo "---> Service account email is not provided, please provide valid one for the deployment;"
-    exit 1
-  else
-    echo "---> The app will use the service account email: $2"
-    SERVICE_ACCOUNT_EMAIL=$2
+    echo "---> The app will be deployed in GCP project: $2"
+    PROJECT_ID=$2
 fi
 
 # -- Check if default region is empty
@@ -50,8 +53,18 @@ if [ -z "$3" ]
     REGION=$3
 fi
 
+# -- Check if service account email is set
+if [ -z "$4" ]
+  then
+    echo "---> Service account email is not provided, please provide valid one for the deployment;"
+    exit 1
+  else
+    echo "---> The app will use the service account email: $4"
+    SERVICE_ACCOUNT_EMAIL=$4
+fi
+
 # --  -- Build default resources names
-# Default storage buckets names
+# -- Default storage buckets names
 PULSAR_BUCKET_NAME=$PROJECT_ID$PULSAR_BUCKET_ID_SUFFIX
 
 # Default resources paths
@@ -87,7 +100,7 @@ then
     cd "$PULSAR_FOLDER" || return
 
     # Write new version date
-    echo "Pulsar build of: $(date +"%m/%d/%Y")" > README.txt
+    echo "${PULSAR_NAME} build of: $(date +"%m/%d/%Y")" > README.txt
     zip -r "../$PULSAR_ZIP" ./*
 
     # --  --  --  --  --  -- A1 - Create buckets if not exist --  --  --  --  --  -- --  --  --  --  --  --
@@ -117,13 +130,13 @@ then
     #--  --  --  -- Creating topic
     echo "---> Creating topic if not exist $PULSAR_TOPIC"
     gcloud pubsub topics create "$PULSAR_TOPIC"
-    echo "---> The pulsar topic is created"
+    echo "---> The ${PULSAR_NAME} topic is created"
   else
     echo "---> Using existing topic"
   fi
 
   #--  --  --  --  --  -- C -  Deploy Secret Manager files --  --  --  --  --  -- --  --  --  --  --  -- --  --
-  read -p "--->> Do you want to configure Cloud Secret Manager for Pulsar ? [Y/y or N/n]: " -n 1 -r
+  read -p "--->> Do you want to configure Cloud Secret Manager for ${PULSAR_NAME} ? [Y/y or N/n]: " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
@@ -234,11 +247,11 @@ then
                               --no-allow-unauthenticated
 
 
-      echo "---> The new Pulsar Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"
+      echo "---> The new ${PULSAR_NAME} Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"
     fi
 
     echo "---> Trying to remove cloud function zip from the bucket and local folder... "
-    gsutil rm "$PULSAR_GCS_SOURCE_PATH"
+    gsutil rm ${PULSAR_GCS_SOURCE_PATH}
     # Removing the archive
     rm "../$PULSAR_ZIP"
   else
@@ -290,19 +303,19 @@ then
 
     # Create tasked default table if not exist
     echo "---> Creating empty tasked tasks table if not exist"
-    bq mk --table --description "$PULSAR_TASKED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_TASKED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_TASKED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TASKED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create initiated default table if not exist
     echo "---> Creating empty initiated tasks table if not exist"
-    bq mk --table --description "$PULSAR_INITIATED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_INITIATED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_INITIATED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INITIATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create processed default table if not exist
     echo "---> Creating empty processed tasks table if not exist"
-    bq mk --table --description "$PULSAR_PROCESSED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_PROCESSED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_PROCESSED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_PROCESSED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create terminated default table if not exist
     echo "---> Creating empty terminated tasks table if not exist"
-    bq mk --table --description "$PULSAR_TERMINATED_TABLE_DESCRIPTION" "$PROJECT_ID:$PULSAR_NAME.$PULSAR_TERMINATED_TABLE_NAME_$current_table_date" "$TASK_SCHEMA"
+    bq mk --table --description "$PULSAR_TERMINATED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TERMINATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
   else
     echo "---> The deployment don't create default Pulsar BigQuery tables"

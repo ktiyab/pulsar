@@ -44,18 +44,18 @@ variable "PULSAR_REGION" {
 variable "PULSAR_ENTRY_POINT" {
   type = string
   description = "The Cloud Function entry point"
-  default = "pulse"
+  default = "run"
 }
 
 # Memory must be >= to 256
 variable "PULSAR_MEMORY" {
   type = string
   description = "The Cloud Function memory"
-  default = "512M"
+  default = "512"
 
   validation {
-    condition = length(var.PULSAR_MEMORY) >= 4
-    error_message = "Please provide a valid memory value (256M, 512M, 1024M)."
+    condition = length(var.PULSAR_MEMORY) >= 3
+    error_message = "Please provide a valid memory value (256, 512, 1024)."
   }
 }
 

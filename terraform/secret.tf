@@ -1,3 +1,4 @@
+# TODO: Make it work like the shell script
 # Load json files from secret folder contents
 locals {
   # https://www.terraform.io/language/functions/fileset

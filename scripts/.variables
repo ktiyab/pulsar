@@ -1,6 +1,4 @@
 # Environment file for GCP deployment
-
-
 #--- Cloud Function default parameters
 # Zip
 PULSAR_ZIP="${PULSAR_NAME}.zip"

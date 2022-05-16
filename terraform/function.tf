@@ -1,6 +1,6 @@
 # Build bucket name
 locals {
-  SERVICE_ACCOUNT_EMAIL="${var.SERVICE_ACCOUNT_EMAIL}"
+  SERVICE_ACCOUNT_EMAIL=var.SERVICE_ACCOUNT_EMAIL
   PULSAR_ZIP = "${var.PULSAR_NAME}.${var.PULSAR_ZIP}"
 }
 # Creating Cloud Function Zip file
@@ -21,41 +21,46 @@ resource "google_storage_bucket_object" "pulsar_gcs_zip" {
 }
 
 # Creating the Cloud Function
+
+# Enable Cloud Functions API
+resource "google_project_service" "pulsar_cloud_function_service" {
+  project = var.PROJECT_ID
+  service = "cloudfunctions.googleapis.com"
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
+}
+
+# Enable Cloud Build API
+resource "google_project_service" "pulsar_cloud_build_service" {
+  project = var.PROJECT_ID
+  service = "cloudbuild.googleapis.com"
+
+  disable_dependent_services = true
+  disable_on_destroy         = false
+}
+
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloudfunctions2_function
-resource "google_cloudfunctions2_function" "pulsar_function" {
-  provider = google-beta
+resource "google_cloudfunctions_function" "pulsar_function" {
+
   project = var.PROJECT_ID
   name = var.PULSAR_NAME
-  location=var.PULSAR_REGION
+  region=var.PULSAR_REGION
 
-  build_config {
-    runtime = var.PULSAR_RUNTIME
-    entry_point = var.PULSAR_ENTRY_POINT
+  runtime = var.PULSAR_RUNTIME
+  entry_point = var.PULSAR_ENTRY_POINT
+  source_archive_bucket = google_storage_bucket.pulsar_bucket.name
+  source_archive_object = google_storage_bucket_object.pulsar_gcs_zip.name
+  max_instances  = var.PULSAR_MAX_INSTANCE
+  min_instances = var.PULSAR_MIN_INSTANCE
+  available_memory_mb = var.PULSAR_MEMORY
+  timeout = var.PULSAR_TIMEOUT
+  service_account_email=local.SERVICE_ACCOUNT_EMAIL
 
-    source {
-      storage_source {
-        bucket = google_storage_bucket.pulsar_bucket.name
-        object = google_storage_bucket_object.pulsar_gcs_zip.name
-      }
-    }
+  event_trigger {
+      event_type    = "google.pubsub.topic.publish"
+      resource      = google_pubsub_topic.pulsar_topic.name
   }
-
-  service_config {
-    max_instance_count  = var.PULSAR_MAX_INSTANCE
-    min_instance_count = var.PULSAR_MIN_INSTANCE
-    available_memory    = var.PULSAR_MEMORY
-    timeout_seconds     = var.PULSAR_TIMEOUT
-    #service_account_email = local.SERVICE_ACCOUNT_EMAIL
-    ingress_settings = "ALLOW_INTERNAL_ONLY"
-    all_traffic_on_latest_revision = true
-  }
-
-  #event_trigger {
-  #  trigger_region = var.PULSAR_REGION
-  #  event_type = "google.cloud.pubsub.topic.v1.messagePublished"
-  #  pubsub_topic = google_pubsub_topic.pulsar_topic.id
-  #  retry_policy = "RETRY_POLICY_RETRY"
-  #}
 
   depends_on = [google_storage_bucket_object.pulsar_gcs_zip, google_pubsub_topic.pulsar_topic]
 }

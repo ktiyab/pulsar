@@ -83,7 +83,26 @@ read -p "---> Continue? [Y/y or N/n]: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-  echo "Deployment"
+
+  # Remove old context
+  echo "---> Removing old context reference"
+  rm .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  # Write deployment context
+  echo "---> Writing deployment context..."
+  # Create empty file and add python encoding
+  touch .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "# -*- coding: utf-8 -*-" > .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  # Set Context information
+  echo "APP_NAME=\"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "RUNTIME=\"$PULSAR_RUNTIME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "PROJECT_ID=\"$PROJECT_ID\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "REGION=\"$REGION\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "SERVICE_ACCOUNT_EMAIL=\"$SERVICE_ACCOUNT_EMAIL\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "TOPIC=\"$PULSAR_TOPIC\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "STORAGE=\"$PULSAR_BUCKET_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "DATASET=\"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+
+  echo "--> Start deployment process..."
 
   # --  --  --  --  --  --   A - Create cloud function zip from file  --  --  --  --  --  -- --  --  --  --
   read -p "--->> Do you want to configure Cloud Storage and load files? [Y/y or N/n]: " -n 1 -r

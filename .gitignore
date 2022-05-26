@@ -8,3 +8,4 @@ terraform/tf.plan
 terraform/terraform*
 Tests/services-accounts/*.json
 *.zip
+app/README.txt

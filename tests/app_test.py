@@ -1,7 +1,6 @@
 import unittest
 from app import main
-from app import secrets_configs
-from app.task import Task
+from app.library.pulsar.task import Task
 
 import uuid
 import json
@@ -27,8 +26,9 @@ class App_test(unittest.TestCase):
     def test_app_run(self):
 
         event_data=self.build_sample()
-        event_id, response = main.run(event_data, context)
-        self.assertEqual((event_id, response), (gen_id, data))
+        run_context = main.run(event_data, context)
+        print(run_context)
+        self.assertEqual((run_context["event_id"], run_context["data"]), (gen_id, data))
 
     def test_app_task(self):
         new_task = Task()

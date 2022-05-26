@@ -6,10 +6,6 @@
 import json
 import os
 import base64
-
-import globals_configs
-import secrets_configs
-
 # -- -- Configuring the Google Cloud Loging client library
 import logging
 import google.cloud.logging
@@ -21,11 +17,8 @@ logging.basicConfig()
 logger = logging.getLogger('logger')
 logger.addHandler(log_handler)
 # -------------------------------------------------------
-
-# Get default configs
-globals_configs.DEFAULT_PROJECT_ID = os.getenv("GCP_PROJECT")
-globals_configs.DEFAULT_REGION = os.getenv("FUNCTION_REGION")
-globals_configs.DEFAULT_SERVICE_ACCOUNT = os.getenv("FUNCTION_IDENTITY")
+from app.library.pulsar.task import Manager
+task=None
 
 # -- Main run function
 def run(event, context):
@@ -35,12 +28,32 @@ def run(event, context):
     :return: Tuple (event_id, event_data)
     """
 
+    # Get run context
+    run_context = get_run_context()
     # Extract pubsub event ID and Data
-    globals_configs.PUB_SUB_MESSAGE_ID = context.event_id
-    event_data = decode_event_data(event)
+    run_context["data"]  = decode_event_data(event)
+    run_context["event_id"] = context.event_id
 
     # Always return the event_id  and the task
-    return context.event_id, event_data
+    return run_context
+
+def tasked(run_context):
+    # Always catch error
+    try:
+        # Initialize new task
+        manager = Manager()
+        # Load new task
+        manager.load(run_context)
+
+    except Exception as e:
+        logger.error(str(e))
+
+def get_run_context():
+    run_context = {}
+    run_context["project_id"] = os.getenv("GCP_PROJECT")
+    run_context["region"] = os.getenv("FUNCTION_REGION")
+    run_context["service_account"] = os.getenv("FUNCTION_IDENTITY")
+    return run_context
 
 # -- Decode data passed to the Cloud function
 def decode_event_data(event):

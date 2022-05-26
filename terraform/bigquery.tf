@@ -10,47 +10,67 @@ locals {
 PULSAR_TASK_SCHEMA= <<EOF
 [
   {
-    "name": "task_id",
+    "name": "id",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_notifier",
+    "name": "state",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_owners",
+    "name": "service_account",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_project_id",
+    "name": "app",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_region",
+    "name": "runtime",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_parameters",
+    "name": "notifier",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_timestamp",
+    "name": "owners",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_success",
+    "name": "project_id",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "task_message",
+    "name": "region",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "parameters",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "timestamp",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "success",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "message",
     "type": "STRING",
     "mode": "NULLABLE"
   }

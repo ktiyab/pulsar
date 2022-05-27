@@ -6,15 +6,15 @@
 # Import the Secret Manager client library.
 from google.cloud import secretmanager
 
+
 class SecretManagerClient(object):
 
-    SEPARATOR=":"
+    SEPARATOR = ":"
 
     def __init__(self, project_id=None):
         # Create the Secret Manager client.
         self.project_id = project_id
         self.sm_client = secretmanager.SecretManagerServiceClient()
-
 
     def get_secret_text(self, secret_name, secret_version="latest"):
         client = secretmanager.SecretManagerServiceClient()
@@ -28,7 +28,6 @@ class SecretManagerClient(object):
             return None
 
         return self.get_secret(secret_name_n_version)
-
 
     def get_secret(self, secret_name_n_version):
         # Extract secret name and version separated by :

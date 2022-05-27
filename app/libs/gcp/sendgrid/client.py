@@ -7,16 +7,17 @@
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import *
-import json
 
 # Instantiates logging client
 from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 logger.addHandler(NullHandler())
 
-class mailer(object):
 
-    def send(self, from_email, to_emails, subject, html_content, api_key=None, decode=True):
+class Mailer(object):
+
+    @staticmethod
+    def send(from_email, to_emails, subject, html_content, api_key=None):
 
         email_list = to_emails.split('|')
         to_list = Personalization()
@@ -46,5 +47,4 @@ class mailer(object):
             return response
 
         except Exception as e:
-            logger.error("Sendgrid.client.Mailer.Send: Unable to send mail on sendgrid with error: "+ str(e))
-            logger.error("Sendgrid.client.Mailer.Send body error: "+ str(e.body))
+            logger.error("Sendgrid.client.Mailer.Send: Unable to send mail on sendgrid with error: " + str(e))

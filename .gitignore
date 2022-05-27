@@ -9,4 +9,4 @@ terraform/terraform*
 tests/services-accounts/*.json
 tests/private.py
 *.zip
-app/README.txt
+app/version.txt

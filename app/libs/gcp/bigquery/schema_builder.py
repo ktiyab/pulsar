@@ -6,6 +6,7 @@
 
 import ast
 
+
 class SchemaBuilder(object):
 
     default_str_schema = {

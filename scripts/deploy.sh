@@ -76,7 +76,7 @@ PULSAR_GCS_SOURCE_PATH=$PULSAR_BUCKET_NAME_PATH$PULSAR_ZIP
 # Show deployment project
 echo "You current project is"
 echo "---------------------------------------------------- ----------------------------------------------------"
-gcloud config set project $PROJECT_ID
+gcloud config set project "$PROJECT_ID"
 gcloud config configurations list
 echo "---------------------------------------------------- ----------------------------------------------------"
 echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$SOURCE in the project ID $PROJECT_ID"
@@ -93,15 +93,16 @@ then
   # Create empty file and add python encoding
   touch .."$PULSAR_CONTEXT_PY_ROOT_PATH"
   echo "# -*- coding: utf-8 -*-" > .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+
   # Set Context information
-  echo "APP_NAME=\"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "RUNTIME=\"$PULSAR_RUNTIME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "PROJECT_ID=\"$PROJECT_ID\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "REGION=\"$REGION\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "SERVICE_ACCOUNT_EMAIL=\"$SERVICE_ACCOUNT_EMAIL\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "TOPIC=\"$PULSAR_TOPIC\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "STORAGE=\"$PULSAR_BUCKET_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
-  echo "DATASET=\"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "APP_NAME = \"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "RUNTIME = \"$PULSAR_RUNTIME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "PROJECT_ID = \"$PROJECT_ID\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "REGION = \"$REGION\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "SERVICE_ACCOUNT_EMAIL = \"$SERVICE_ACCOUNT_EMAIL\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "TOPIC = \"$PULSAR_TOPIC\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "STORAGE = \"$PULSAR_BUCKET_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
+  echo "DATASET = \"$PULSAR_NAME\"" >> .."$PULSAR_CONTEXT_PY_ROOT_PATH"
 
   echo "--> Start deployment process..."
 
@@ -120,7 +121,7 @@ then
     cd "$PULSAR_FOLDER" || return
 
     # Write new version date
-    echo "${PULSAR_NAME} build of: $(date +"%m/%d/%Y")" > README.txt
+    echo "${PULSAR_NAME} build of: $(date +"%m/%d/%Y")" > version.txt
     zip -r "../$PULSAR_ZIP" ./*
 
     # --  --  --  --  --  -- A1 - Create buckets if not exist --  --  --  --  --  -- --  --  --  --  --  --
@@ -218,7 +219,7 @@ then
           secret_name="${secret_name//"../$PULSAR_SECRETS_FOLDER/"}"
 
           # If value secret doesn't exist create it
-          echo "gcloud secrets versions add "$secret_name" --data-file=$filename"
+          echo "gcloud secrets versions add $secret_name --data-file=$filename"
           gcloud secrets versions add "$secret_name" --data-file="$filename"
 
           # Adding secrets to configs file
@@ -241,8 +242,9 @@ then
     #Trying to delete it if cloud function if exist
     echo "---> Trying to delete existing cloud function... "
     gcloud beta functions delete "$PULSAR_NAME"  \
+    --gen2 \
     --region="$REGION"
-    #--gen2 \
+
     echo "---> The old Cloud function is deleted"
 
     #------------  Deploy function
@@ -253,6 +255,7 @@ then
       pwd
       echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$PULSAR_REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$PULSAR_GCS_SOURCE_PATH"
       gcloud beta functions deploy "$PULSAR_NAME" \
+                              --gen2 \
                               --region="$REGION" \
                               --service-account="$SERVICE_ACCOUNT_EMAIL" \
                               --entry-point="$PULSAR_ENTRY_POINT" \
@@ -264,7 +267,6 @@ then
                               --min-instances="$PULSAR_MIN_INSTANCE" \
                               --max-instances="$PULSAR_MAX_INSTANCE" \
                               --no-allow-unauthenticated
-                              #--gen2 \
 
 
       echo "---> The new ${PULSAR_NAME} Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"

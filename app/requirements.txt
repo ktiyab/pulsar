@@ -4,3 +4,4 @@ google-cloud-bigquery
 google-cloud-secret-manager
 bs4
 sendgrid
+requests

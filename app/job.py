@@ -5,25 +5,27 @@
 
 # Definitions: A "job" is a complete unit of work under execution. A job is made up of many steps or "tasks"
 
-# Instantiates logging client
-from logging import getLogger, NullHandler
-logger = getLogger(__name__)
-logger.addHandler(NullHandler())
-
 import calendar
 import time
 import json
 
 import context as deployment_context
 import configurations as app_configs
-from  notification import Notice, Stream
+from notification import Notice, Stream
+from runner import Runner
+
+# Instantiates logging client
+from logging import getLogger, NullHandler
+logger = getLogger(__name__)
+logger.addHandler(NullHandler())
+
 
 class Task(object):
 
     READY_STATE = "ready"
-    RUNNABLE_STATE="runnable"
-    COMPLETED_STATE="completed"
-    INTERRUPTED_STATE="interrupted"
+    RUNNABLE_STATE = "runnable"
+    COMPLETED_STATE = "completed"
+    INTERRUPTED_STATE = "interrupted"
 
     CURRENT_DATE = time.strftime("%Y%m%d", time.gmtime())
 
@@ -69,19 +71,19 @@ class Task(object):
         self.processed_timestamp = str(calendar.timegm(time.gmtime()))
 
     def flat_parameters(self):
-        self.parameters=json.dumps(self.parameters)
+        self.parameters = json.dumps(self.parameters)
 
     def succeed(self, message):
         self.success = "True"
-        self.details = self.details + message
+        self.details = message
 
     def failed(self, message):
         self.success = "False"
         self.state = self.INTERRUPTED_STATE
-        self.details = self.details + message
+        self.details = message
 
     def message(self, message):
-        self.details=message
+        self.details = message
 
     def to_json_str(self):
         """
@@ -97,23 +99,30 @@ class Task(object):
         :return: HTML str
         """
 
-        head ='<p>'+ app_configs.JOB_EMAIL_CAPTION.format(self.app.upper()) + ' </p><ul>'
-        html_value=""
+        head = '<p>' + app_configs.JOB_EMAIL_CAPTION.format(self.app.upper()) + ' </p><ul>'
+        html_value = ""
 
         task_dict = self.to_dict()
         for key in task_dict:
             html_value = html_value + '<li>' + \
                                         '<b style="text-transform: capitalize;">' + \
-                                             key.replace("_", " ") + \
+                                        key.replace("_", " ") + \
                                         ':</b> ' + \
                                         str(task_dict[key]) + \
-                                    '</li>'
+                                        '</li>'
         html_value = head + html_value + '</ul><br />'
         return html_value
 
     def get_table_id(self):
         return '{}_{}'.format(self.state.lower(), str(self.CURRENT_DATE))
 
+    def update(self, success, response):
+        # Update task status
+        self.processed()
+        if success:
+            self.succeed(response)
+        else:
+            self.failed(response)
 
 
 class Job(object):
@@ -125,7 +134,7 @@ class Job(object):
     def __init__(self, ongoing_task=None):
         if ongoing_task:
             logger.info("--> Job.Job.init: Loading existing task...")
-            self.task=ongoing_task
+            self.task = ongoing_task
         else:
             logger.info("--> Job.Job.init: Creating new task...")
 
@@ -140,6 +149,7 @@ class Job(object):
         logger.info("--> Job.Job.clean: Cleaning task...")
         self.task = Task()
 
+    # -------------- 1 - VALIDATE & LOAD TASK PARAMETERS ----------------------------------------
     def load(self, run_context):
         logger.info("--> Job.Job.load: Loading task...")
 
@@ -163,10 +173,7 @@ class Job(object):
                 self.task.failed(context_message)
 
             # Load data if exist
-            if self.task.success.lower()=="true" and self.key_exist("data", run_context):
-
-                print(type(run_context["data"]))
-                #run_context_data = json.dumps(run_context["data"])
+            if self.task.success.lower() == "true" and self.key_exist("data", run_context):
 
                 # Check if required json data are present
                 is_valid_data, data_message = self.is_valid_data(run_context["data"])
@@ -178,7 +185,7 @@ class Job(object):
                     self.task.owners = run_context["data"]["owners"]
                     self.task.parameters = run_context["data"]["parameters"]
             # If no error, it's loaded successfully
-            if self.task.success.lower()=="true":
+            if self.task.success.lower() == "true":
                 self.task.succeed(app_configs.TASK_IS_LOAD.format(run_context["event_id"]))
 
             # Update timestamp
@@ -187,18 +194,14 @@ class Job(object):
         except Exception as e:
             logger.error("--> Job.Job.load: Unable to load context information with message: " + str(e))
             self.task.failed(app_configs.TASK_LOAD_FAILED.format(str(e)))
+            return False, None
         finally:
             pass
 
-        #TODO: We are unable to load task, send alert to admin?
-        #TODO: Check always_notify and send email - Create dedicated class for email management
-        #TODO: Check task state and send email or not
-        # Notify by email and log analytic data
+        # Stream and notify
+        self.broadcast()
 
-        self.stream_into_bigquery()
-        self.notify()
-
-        return self.task
+        return True, self.task
 
     def is_valid_data(self, json_data):
         """
@@ -215,7 +218,6 @@ class Job(object):
                 return False, app_configs.MISSING_JSON_KEY.format(key)
         return True, app_configs.JSON_KEYS_ARE_PRESENT
 
-
     def is_valid_context(self, run_context):
         """
         Run context must equal to deployment context (project_id, region, service_account)
@@ -230,10 +232,77 @@ class Job(object):
         if run_context["region"] != deployment_context.REGION:
             return False, app_configs.CONTEXT_REGION_ERROR
 
-        if run_context["service_account"]!=deployment_context.SERVICE_ACCOUNT_EMAIL:
+        if run_context["service_account"] != deployment_context.SERVICE_ACCOUNT_EMAIL:
             return False, app_configs.CONTEXT_SERVICE_ACCOUNT_ERROR
 
         return True, app_configs.CONTEXT_IS_VALID
+
+    # -------------- 2 - CHECK IF TASK IS RUNNABLE ----------------------------------------
+
+    def is_runnable(self):
+        """
+        Check if job task is runnable
+        :return:
+        """
+        logger.info("--> Job.Job.is_runnable: Check if task is runnable...")
+
+        try:
+            # Update task state
+            self.task.acknowledge()
+            self.task.state = self.task.RUNNABLE_STATE
+
+            # Try to load task parameters
+            runner = Runner()
+            success, response = runner.load(self.task.parameters)
+
+            # Update task status
+            self.task.update(success, response)
+
+        except Exception as e:
+            logger.error("--> Job.Job.is_runnable: The task is not runnable with message : " + str(e))
+            self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
+            return False, None
+        finally:
+            pass
+
+        # Stream and notify
+        self.broadcast()
+
+        return True, self.task
+
+    # -------------- 3 - RUN TASK ----------------------------------------
+    def run(self):
+        """
+        Run a task
+        :return: task
+        """
+        logger.info("--> Job.Job.run: Running a task...")
+
+        try:
+            # Update task state
+            self.task.acknowledge()
+            self.task.state = self.task.COMPLETED_STATE
+
+            # Try to execute task parameters
+            runner = Runner()
+            success, response = runner.execute(self.task.parameters)
+
+            # Update task status
+            self.task.update(success, response)
+
+        except Exception as e:
+            logger.error("--> Job.Job.is_runnable: The task is not runnable with message : " + str(e))
+            self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
+            return False, None
+        finally:
+            pass
+
+        # Stream and notify
+        self.broadcast()
+
+        return True, self.task
+
+    # -------------- UTILS ----------------------------------------
 
     def key_exist(self, key, json_object):
         """
@@ -248,7 +317,6 @@ class Job(object):
 
         return False
 
-
     def notify(self):
         """
         Send notification if required about job status
@@ -258,8 +326,8 @@ class Job(object):
         logger.info("--> Job.Job.notify: Checking notification status...")
         # If users ask to always has notification (even in success)
         # or if we have a task failure, send email
-        if self.task.always_notify.lower() =="true" or self.task.success.lower()=="false":
-            if self.task.success.lower()=="true":
+        if self.task.always_notify.lower() == "true" or self.task.success.lower() == "false":
+            if self.task.success.lower() == "true":
                 self.NOTICE.success(self.task.to_html(), None, self.task.owners)
             else:
                 self.NOTICE.failure(self.task.to_html(), None, self.task.owners)
@@ -276,4 +344,9 @@ class Job(object):
         table_data = self.task.to_dict()
         self.STREAM.into_bigquery(table_id, table_data)
 
+        return True
 
+    def broadcast(self):
+        # Stream and notify
+        self.stream_into_bigquery()
+        self.notify()

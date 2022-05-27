@@ -25,7 +25,7 @@ Pulsar aimed to provide a reusable framework skeleton for scalable Cloud Functio
 - The processing part of our framework will be managed by Cloud Function coupled with Secret Manager which keeps our versioned secrets. Secret Manager will be used for example to host securely our SendGrid APIs key.
 - The output services like Cloud Storage will allow hosting input/output files, BigQuery will enable us to add analytics layers on top of the system, Cloud Logging will be leveraged for logs, and Sendgrid will serve as an email service for direct notifications. 
 
-### Pulsar states
+## Task management and Cloud User Experience
 
 The framework states are related to internal operations of the Cloud Function since it is the processing resource of our components that will host our running logic. Identifying those states and including them in our skeleton design allows us to add some level of observability to our app.
 
@@ -72,6 +72,7 @@ https://console.cloud.google.com/iam-admin/serviceaccounts
 - Pub/Sub Editor
 - Storage Admin
 - Secret Manager Secret Accessor
+- Cloud Run Invoker
 
 ### Sendgrid API
 Configure sendgrid with your API Key
@@ -79,7 +80,7 @@ Configure sendgrid with your API Key
   - Modify the "pulsar_sendgrid_key" variable in the file with your Sengrid API key
   - Rename your file pulsar_sendgrid.json
 
-### Add you custom function class
+### Add your custom function class
 
 [Coming soon]
 

@@ -1,8 +1,8 @@
 {
 	"always_notify": "true",
-	"owners": "wealthman@gcpbees.com",
+	"owners": "tiyab@gcpbees.com",
 	"parameters": {
-		"run": "Sample-->HelloWorld->('Hello', 'World')",
+		"run": "custom.sample.Greeting.get:Pulsar",
 		"response_to": "topic_name"
 	}
 }

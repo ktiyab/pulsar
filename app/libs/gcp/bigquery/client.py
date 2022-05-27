@@ -1,9 +1,13 @@
+# -*- coding: utf-8 -*-
+# By Tiyab KONLAMBIGUE
+# GCP PULSAR ALPHA - A cloud function skeleton for events based app
+# mailto : tiyab@gcpbees.com | ktiyab@gmail.com
+
 from google.cloud import bigquery
 import google.cloud.logging
 from . import schema_builder
 import logging
 import time
-import json
 
 # Instantiates a client
 logging_client = google.cloud.logging.Client()
@@ -13,7 +17,8 @@ logging.basicConfig()
 logger = logging.getLogger('logger')
 
 # Waiting after fresh table creation
-SLEEP_AFTER_TABLE_CREATION=5
+SLEEP_AFTER_TABLE_CREATION = 5
+
 
 class BigQueryClient(object):
 
@@ -40,7 +45,7 @@ class BigQueryClient(object):
             if not self._dataset_exists(dataset_reference):
                 dataset = bigquery.Dataset(dataset_reference)
                 self.bq_client.create_dataset(dataset, timeout=30)
-                logger.info("--> libs.gcp.bigquery.client.BigQueryClient.create_dataset:Created dataset {} " \
+                logger.info("--> libs.gcp.bigquery.client.BigQueryClient.create_dataset:Created dataset {} "
                             .format(self.bq_client.project, dataset_reference.dataset_id))
 
             # Generate schema on the fly
@@ -61,8 +66,10 @@ class BigQueryClient(object):
             return True
 
         except Exception as e:
-            logger.info('--->libs.gcp.client.BigQueryClient.push_into_table: Unable to push into table ' \
-                   ' {}.{}.{} in location with error {}'.format(project_id, dataset_id, table_id, location, str(e)))
+            logger.info('--->libs.gcp.client.BigQueryClient.push_into_table: Unable to push into table '
+                        ' {}.{}.{} in location with error {}'
+                        .format(project_id, dataset_id, table_id, location, str(e))
+                        )
             logger.error(str(e))
             return False
         finally:

@@ -3,7 +3,7 @@
 # GCP PULSAR ALPHA - A cloud function skeleton for events based app
 # mailto : tiyab@gcpbees.com | ktiyab@gmail.com
 
-# -- Definitions: Notifier purpose is to alert via email
+# -- Definitions: Notification purpose is to alert via email
 
 from bs4 import BeautifulSoup
 import json
@@ -22,17 +22,17 @@ logger.addHandler(NullHandler())
 dir_path = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_EMAIL_TEMPLATE_PATH = dir_path + app_configs.DEFAULT_EMAIL_TEMPLATE_PATH
 
+
 class Notice(object):
 
     PROJECT_ID = None
-    MAILING_LIST=""
-    APP_NAME=""
-    MAILING_CLIENT=None
+    APP_NAME = ""
+    MAILING_CLIENT = None
 
     def __init__(self, project_id, app_name=None):
         self.PROJECT_ID = project_id
-        self.APP_NAME=app_name
-        self.MAILING_CLIENT = sendgrid_client.mailer()
+        self.APP_NAME = app_name
+        self.MAILING_CLIENT = sendgrid_client.Mailer()
 
     def load_secrets(self):
 
@@ -53,15 +53,16 @@ class Notice(object):
         logger.info("--> notification.Notice.success: Creating success email.")
 
         # Load default info if not provided
-        if not self.MAILING_LIST:
-            mailing_list =app_configs.DEFAULT_MAIL_TO
+        if not mailing_list:
+            mailing_list = app_configs.DEFAULT_MAIL_TO
 
         if not subject:
             subject = app_configs.DEFAULT_SUCCESS_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
 
         templating_body = self.build_template(subject, body, True)
 
-        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list, subject, templating_body, app_configs.SENDGRID_API_KEY)
+        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list, subject,
+                                 templating_body, app_configs.SENDGRID_API_KEY)
 
         return True
 
@@ -69,23 +70,21 @@ class Notice(object):
         logger.info("-->notification.Notice.failure: Creating failure email.")
 
         # Load default info if not provided
-        if not self.MAILING_LIST:
-            mailing_list =app_configs.DEFAULT_MAIL_TO
+        if not mailing_list:
+            mailing_list = app_configs.DEFAULT_MAIL_TO
 
         if not subject:
             subject = app_configs.DEFAULT_FAILURE_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
 
         templating_body = self.build_template(subject, body, False)
 
-        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list, subject, templating_body, app_configs.SENDGRID_API_KEY)
+        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list,
+                                 subject, templating_body, app_configs.SENDGRID_API_KEY)
 
         return True
 
     def build_template(self, title, message, success=False):
         logger.info("---> notification.Notice.build_template: Building mail template")
-
-        template = None
-
         if success:
             color = app_configs.SUCCESS_COLOR
         else:
@@ -107,22 +106,22 @@ class Notice(object):
 
 class Stream(object):
 
-    PROJECT_ID=None
-    DATASET_ID=None
-    LOCATION=None
+    PROJECT_ID = None
+    DATASET_ID = None
+    LOCATION = None
 
     def __init__(self, project_id, dataset_id, location):
-        self.PROJECT_ID=project_id
-        self.DATASET_ID=dataset_id
-        self.LOCATION=location
+        self.PROJECT_ID = project_id
+        self.DATASET_ID = dataset_id
+        self.LOCATION = location
 
     def into_bigquery(self, table_id, json_data_object):
         """
         Stream data into BigQuery
+        :param table_id:
         :param json_data_object:
-        :return:
+        :return: None
         """
         project_bigquery = bigquery.BigQueryClient(self.PROJECT_ID, self.LOCATION)
         project_bigquery.stream_into_table(self.PROJECT_ID, self.DATASET_ID, self.LOCATION,
                                            table_id, json_data_object)
-

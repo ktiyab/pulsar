@@ -17,6 +17,7 @@ CONTEXT_REGION_ERROR = "Run context region not equal to deployment region."
 CONTEXT_SERVICE_ACCOUNT_ERROR = "Run context service_account not equal to deployment service_account."
 
 TASK_LOAD_FAILED = "Unable to load context information with message: {}"
+TASK_NOT_RUNNABLE = "The task is not runnable with message: {}"
 
 MISSING_JSON_KEY = "Missing required key < {} >, please provide it."
 JSON_KEYS_ARE_PRESENT = "All required keys are present."
@@ -32,10 +33,16 @@ DEFAULT_FAILURE_SUBJECT = "GCP project {} - {} job failure"
 SUCCESS_COLOR = "#71C105"
 FAILURE_COLOR = "#E42827"
 HEADER_COLOR = "#9428FF"
-DEFAULT_EMAIL_TEMPLATE_PATH="/template/mail_template.html"
+DEFAULT_EMAIL_TEMPLATE_PATH = "/template/mail_template.html"
 
 # Metadata paths
 INTERNAL_BASE_URL = "http://metadata.google.internal/computeMetadata/v1/"
 INTERNAL_PROJECT_INFO = INTERNAL_BASE_URL + "project/project-id"
 INTERNAL_REGION_INFO = INTERNAL_BASE_URL + "instance/region"
 INTERNAL_SERVICE_ACCOUNT_INFO = INTERNAL_BASE_URL + "instance/service-accounts/default/email"
+
+# Runner
+RUN_KEY = "run"
+MODULE_SEPARATOR = "."
+PARAMETERS_SEPARATOR = ":"
+VARIABLES_SEPARATOR = ","

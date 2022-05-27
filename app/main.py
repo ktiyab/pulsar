@@ -6,36 +6,32 @@
 import json
 import os
 import base64
+import requests
+
+# -------------------------------------------------------
+# Custom functionalities
+from job import Job
+from notification import Notice
+import context as app_context
+import configurations as app_configs
+
+# -------------------------------------------------------
 
 # -- -- Configuring the Google Cloud Loging client library
 import logging
 import google.cloud.logging
 
-# Instantiates logger client
-import requests
-
+# -- -- Instantiates logger client
 logging_client = google.cloud.logging.Client()
 
-# Connects the logger to the root logging handler; by default this captures all logs at INFO level and higher
+# -- -- Connects the logger to the root logging handler; by default this captures
+# all logs at INFO level and higher
 log_handler = logging_client.get_default_handler()
 logging.basicConfig()
 logger = logging.getLogger('logger')
 logger.addHandler(log_handler)
 
-# -------------------------------------------------------
-from job import Job
-import  context as app_context
-import configurations as app_configs
 
-# Minimal context
-project_id = os.getenv("GCP_PROJECT")
-app_name = app_context.APP_NAME
-
-
-task=None
-notify=None
-
-# -- Main run function
 def run(event, context):
     """
     :param event:
@@ -48,22 +44,35 @@ def run(event, context):
         # Get run context
         job_context = build_context(event, context)
 
-        # Set task cursor to entry
-        job_task=initialize(job_context)
+        # Initialize task
+        success, initialized_task = initialize(job_context)
 
-        # Run task parameters
+        if success:
+            # Check if task is runnable
+            success, runnable_task = is_runnable(initialized_task)
+
+            if success:
+                # Execute task
+                success, completed_task = execute(runnable_task)
 
         # Always return the event_id  and the task
         return job_context
 
     except Exception as e:
         # Build emergency notification
+        project_id = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
+        app_name = app_context.APP_NAME
+
         details = "--> Main.run failed with error: " + str(e) + \
-                  " \n for app " + str() + \
+                  " \n for app " + str(app_name) + \
             " \n in the project " + str(project_id)
-        caption = str(app_context.APP_NAME) + " failure"
+        caption = str(app_context.APP_NAME).upper() + " failure"
         logger.error(details)
-        notify.failure(details, caption)
+        Notice(project_id, app_context.APP_NAME).failure(details, caption)
+        pass
+
+# - - - - - TASK INITIALIZATION - - - - - - - - - - - - - - - - - -
+
 
 def initialize(job_context):
     """
@@ -75,16 +84,13 @@ def initialize(job_context):
     # Always catch error
     try:
         # Initialize new task
-        new_job = Job()
-
+        job_task = Job()
         # Load new task
-        task = new_job.load(job_context)
-
-
-        return task
+        return job_task.load(job_context)
 
     except Exception as e:
-        logger.error("--> Main.tasked failed with error: " + str(e))
+        logger.error("--> Main.initialize failed with error: " + str(e))
+
 
 def build_context(event, context):
     """
@@ -94,11 +100,9 @@ def build_context(event, context):
     :return:
     """
     logger.info("---->Main.build_context: Decoding provided data.")
-    job_context = {}
+    job_context = {"data": decode_event_data(event), "event_id": context.event_id}
 
     # Extract pubsub event ID and Data
-    job_context["data"] = decode_event_data(event)
-    job_context["event_id"] = context.event_id
 
     # Set env info
     if os.getenv("GCP_PROJECT"):
@@ -114,6 +118,7 @@ def build_context(event, context):
 
     return job_context
 
+
 def get_metadata(internal_url):
     """
     Get GCP internal meta data
@@ -127,8 +132,9 @@ def get_metadata(internal_url):
     else:
         return str(response.text)
 
-
 # -- Decode data passed to the Cloud function
+
+
 def decode_event_data(event):
     """
     Get event and extract json data
@@ -143,13 +149,15 @@ def decode_event_data(event):
         return load_json_data(json_data)
 
 # -- Transform json data into object
+
+
 def load_json_data(json_string):
     """
     Try to convert string data into Json object
     :param json_string:
     :return: json object or None
     """
-    logger.info("----> Running load_json_data.")
+    logger.info("---->Main.load_json_data: Loading JSON data.")
     try:
         json_object = json.loads(json_string)
         return json_object
@@ -157,4 +165,42 @@ def load_json_data(json_string):
         logger.error("---->The value: " + str(json_string) + " is not a valid json data. Error: " + str(e))
         return None
 
-    return None
+# - - - - - TASK VALIDATION - - - - - - - - - - - - - - - - - -
+
+
+def is_runnable(initialized_task):
+    """
+    Try to load task parameters
+    :param initialized_task:
+    :return:Task
+    """
+    logger.info("--> Main.is_runnable: Loading task parameters...")
+    # Always catch error
+    try:
+        # Initialize new task
+        # Initialize new task
+        job_task = Job(initialized_task)
+        # Load new task
+        return job_task.is_runnable()
+
+    except Exception as e:
+        logger.error("--> Main.is_runnable failed with error: " + str(e))
+
+
+# - - - - - TASK EXECUTION - - - - - - - - - - - - - - - - - -
+def execute(runnable_task):
+    """
+    Try to execute task
+    :param runnable_task:
+    :return: Task
+    """
+    logger.info("--> Main.execute: Executing task...")
+    # Always catch error
+    try:
+        # Load ongoing task
+        job_task = Job(runnable_task)
+        # Run
+        return job_task.run()
+
+    except Exception as e:
+        logger.error("--> Main.execute failed with error: " + str(e))

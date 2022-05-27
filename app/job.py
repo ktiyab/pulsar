@@ -20,10 +20,10 @@ from  notification import Notice, Stream
 
 class Task(object):
 
-    TASKED_STATE = "ready"
-    INITIATE_STATE="runnable"
-    PROCESSED_STATE="completed"
-    TERMINATED_STATE="interrupted"
+    READY_STATE = "ready"
+    RUNNABLE_STATE="runnable"
+    COMPLETED_STATE="completed"
+    INTERRUPTED_STATE="interrupted"
 
     CURRENT_DATE = time.strftime("%Y%m%d", time.gmtime())
 
@@ -77,7 +77,7 @@ class Task(object):
 
     def failed(self, message):
         self.success = "False"
-        self.state = self.TERMINATED_STATE
+        self.state = self.INTERRUPTED_STATE
         self.details = self.details + message
 
     def message(self, message):
@@ -148,7 +148,7 @@ class Job(object):
 
             # Load task
             self.task.id = run_context["event_id"]
-            self.task.state = self.task.TASKED_STATE
+            self.task.state = self.task.READY_STATE
             self.task.app = deployment_context.APP_NAME
             self.task.project_id = run_context["project_id"]
             self.task.region = run_context["region"]
@@ -165,17 +165,18 @@ class Job(object):
             # Load data if exist
             if self.task.success.lower()=="true" and self.key_exist("data", run_context):
 
-                run_context_data = json.loads(run_context["data"])
+                print(type(run_context["data"]))
+                #run_context_data = json.dumps(run_context["data"])
 
                 # Check if required json data are present
-                is_valid_data, data_message = self.is_valid_data(run_context_data)
+                is_valid_data, data_message = self.is_valid_data(run_context["data"])
 
                 if not is_valid_data:
                     self.task.failed(data_message)
                 else:
-                    self.task.always_notify = run_context_data["always_notify"]
-                    self.task.owners = run_context_data["owners"]
-                    self.task.parameters = run_context_data["parameters"]
+                    self.task.always_notify = run_context["data"]["always_notify"]
+                    self.task.owners = run_context["data"]["owners"]
+                    self.task.parameters = run_context["data"]["parameters"]
             # If no error, it's loaded successfully
             if self.task.success.lower()=="true":
                 self.task.succeed(app_configs.TASK_IS_LOAD.format(run_context["event_id"]))
@@ -185,8 +186,9 @@ class Job(object):
 
         except Exception as e:
             logger.error("--> Job.Job.load: Unable to load context information with message: " + str(e))
-            self.task.failed()
-            self.task.details += app_configs.TASK_LOAD_FAILED.format(str(e))
+            self.task.failed(app_configs.TASK_LOAD_FAILED.format(str(e)))
+        finally:
+            pass
 
         #TODO: We are unable to load task, send alert to admin?
         #TODO: Check always_notify and send email - Create dedicated class for email management

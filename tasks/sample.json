@@ -1,3 +1,8 @@
 {
-  "sample": "This is a test data"
+	"always_notify": "true",
+	"owners": "wealthman@gcpbees.com",
+	"parameters": {
+		"run": "Sample-->HelloWorld->('Hello', 'World')",
+		"response_to": "topic_name"
+	}
 }

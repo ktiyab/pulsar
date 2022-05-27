@@ -18,8 +18,7 @@ from job import Task
 
 # Set test data
 event_id = str(uuid.uuid1())
-data='''
-{
+data={
 	"always_notify": "true",
 	"owners": "wealthman@gcpbees.com",
 	"parameters": {
@@ -27,7 +26,6 @@ data='''
 		"response_to": "topic_name"
 	}
 }
-'''
 
 class context:
     event_id=event_id

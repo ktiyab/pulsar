@@ -76,6 +76,7 @@ PULSAR_GCS_SOURCE_PATH=$PULSAR_BUCKET_NAME_PATH$PULSAR_ZIP
 # Show deployment project
 echo "You current project is"
 echo "---------------------------------------------------- ----------------------------------------------------"
+gcloud config set project $PROJECT_ID
 gcloud config configurations list
 echo "---------------------------------------------------- ----------------------------------------------------"
 echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$SOURCE in the project ID $PROJECT_ID"
@@ -240,8 +241,8 @@ then
     #Trying to delete it if cloud function if exist
     echo "---> Trying to delete existing cloud function... "
     gcloud beta functions delete "$PULSAR_NAME"  \
-    --gen2 \
     --region="$REGION"
+    #--gen2 \
     echo "---> The old Cloud function is deleted"
 
     #------------  Deploy function
@@ -252,7 +253,6 @@ then
       pwd
       echo "---> Creating the Cloud function with name: $PULSAR_NAME region:$PULSAR_REGION entrypoint:$PULSAR_ENTRY_POINT memory:$PULSAR_MEMORY runtime:$PULSAR_RUNTIME source:$PULSAR_GCS_SOURCE_PATH"
       gcloud beta functions deploy "$PULSAR_NAME" \
-                              --gen2 \
                               --region="$REGION" \
                               --service-account="$SERVICE_ACCOUNT_EMAIL" \
                               --entry-point="$PULSAR_ENTRY_POINT" \
@@ -264,6 +264,7 @@ then
                               --min-instances="$PULSAR_MIN_INSTANCE" \
                               --max-instances="$PULSAR_MAX_INSTANCE" \
                               --no-allow-unauthenticated
+                              #--gen2 \
 
 
       echo "---> The new ${PULSAR_NAME} Cloud function is accessible on https://console.cloud.google.com/functions/details/$REGION/$PULSAR_NAME?project=$PROJECT_ID"
@@ -322,19 +323,19 @@ then
 
     # Create tasked default table if not exist
     echo "---> Creating empty tasked tasks table if not exist"
-    bq mk --table --description "${PULSAR_TASKED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TASKED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_READY_TABLE_NAME}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_READY_TABLE_NAME}_${current_table_date}" "$PULSAR_TASK_SCHEMA"
 
     # Create initiated default table if not exist
     echo "---> Creating empty initiated tasks table if not exist"
-    bq mk --table --description "${PULSAR_INITIATED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INITIATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_RUNNABLE_TABLE_NAME}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_RUNNABLE_TABLE_NAME}_${current_table_date}" "$PULSAR_TASK_SCHEMA"
 
     # Create processed default table if not exist
     echo "---> Creating empty processed tasks table if not exist"
-    bq mk --table --description "${PULSAR_PROCESSED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_PROCESSED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_COMPLETED_TABLE_NAME}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_COMPLETED_TABLE_NAME}_${current_table_date}" "$PULSAR_TASK_SCHEMA"
 
     # Create terminated default table if not exist
     echo "---> Creating empty terminated tasks table if not exist"
-    bq mk --table --description "${PULSAR_TERMINATED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TERMINATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_INTERRUPTED_TABLE_NAME}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INTERRUPTED_TABLE_NAME}_${current_table_date}" "$PULSAR_TASK_SCHEMA"
 
   else
     echo "---> The deployment don't create default Pulsar BigQuery tables"

@@ -12,6 +12,8 @@ import logging
 import google.cloud.logging
 
 # Instantiates logger client
+import requests
+
 logging_client = google.cloud.logging.Client()
 
 # Connects the logger to the root logging handler; by default this captures all logs at INFO level and higher
@@ -23,6 +25,7 @@ logger.addHandler(log_handler)
 # -------------------------------------------------------
 from job import Job
 import  context as app_context
+import configurations as app_configs
 
 # Minimal context
 project_id = os.getenv("GCP_PROJECT")
@@ -46,7 +49,7 @@ def run(event, context):
         job_context = build_context(event, context)
 
         # Set task cursor to entry
-        job_task=tasked(job_context)
+        job_task=initialize(job_context)
 
         # Run task parameters
 
@@ -62,7 +65,7 @@ def run(event, context):
         logger.error(details)
         notify.failure(details, caption)
 
-def tasked(job_context):
+def initialize(job_context):
     """
     Try to initialized a task
     :param job_context:
@@ -98,11 +101,32 @@ def build_context(event, context):
     job_context["event_id"] = context.event_id
 
     # Set env info
-    job_context["project_id"] = os.getenv("GCP_PROJECT")
-    job_context["region"] = os.getenv("FUNCTION_REGION")
-    job_context["service_account"] = os.getenv("FUNCTION_IDENTITY")
+    if os.getenv("GCP_PROJECT"):
+        # Python 3.7 et Go 1.11 envs OR local tests
+        job_context["project_id"] = os.getenv("GCP_PROJECT")
+        job_context["region"] = os.getenv("FUNCTION_REGION")
+        job_context["service_account"] = os.getenv("FUNCTION_IDENTITY")
+    else:
+        # Other envs
+        job_context["project_id"] = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
+        job_context["region"] = get_metadata(app_configs.INTERNAL_REGION_INFO)
+        job_context["service_account"] = get_metadata(app_configs.INTERNAL_SERVICE_ACCOUNT_INFO)
 
     return job_context
+
+def get_metadata(internal_url):
+    """
+    Get GCP internal meta data
+    :param internal_url:
+    :return: Object
+    """
+    logger.info("---->Main.get_metadata: Getting GCP internal meta data.")
+    response = requests.get(url=internal_url, headers={'Metadata-Flavor': 'Google'})
+    if internal_url == app_configs.INTERNAL_REGION_INFO:
+        return str(response.text.split("/")[3])
+    else:
+        return str(response.text)
+
 
 # -- Decode data passed to the Cloud function
 def decode_event_data(event):
@@ -114,8 +138,7 @@ def decode_event_data(event):
     logger.info("---->Main.decode_event_data: Decoding provided data.")
     if 'data' in event:
         # Get json string
-        json_data = base64.b64decode(event['data']).decode('utf-8')
-        logger.info("----> Decoded data: " + str(json_data))
+        json_data = base64.b64decode(event['data'])
         # Json string to object
         return load_json_data(json_data)
 

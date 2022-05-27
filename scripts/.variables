@@ -57,4 +57,4 @@ PULSAR_TERMINATED_TABLE_NAME="terminated"
 PULSAR_TERMINATED_TABLE_DESCRIPTION="The ${PULSAR_NAME} terminated tasks table."
 
 PULSAR_DATASET_DESCRIPTION="${PULSAR_NAME} analytical logs."
-PULSAR_TASK_SCHEMA="id:STRING,state:STRING,app:STRING,service_account:STRING,runtime:STRING,notifier:STRING,owners:STRING,project_id:STRING,region:STRING,parameters:STRING,timestamp:STRING,success:STRING,message:STRING"
+PULSAR_TASK_SCHEMA="id:STRING,state:STRING,app:STRING,project_id:STRING,region:STRING,service_account:STRING,runtime:STRING,always_notify:STRING,owners:STRING,parameters:STRING,acknowledge_timestamp:STRING,processed_timestamp:STRING,success:STRING,details:STRING"

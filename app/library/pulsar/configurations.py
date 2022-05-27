@@ -1,1 +1,0 @@
-EXPECTED_DATA=["notifier", "owners", "parameters"]

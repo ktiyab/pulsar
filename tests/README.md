@@ -1,0 +1,3 @@
+- In the service account folder you can put your service account dedicated to tests with bellow permission:
+  - Google Cloud Logger Editor
+  - BigQuery Editor (on specific dataset if you want)

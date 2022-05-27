@@ -20,27 +20,7 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
-    "name": "service_account",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
     "name": "app",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "runtime",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "notifier",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "owners",
     "type": "STRING",
     "mode": "NULLABLE"
   },
@@ -55,12 +35,37 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
+    "name": "service_account",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "runtime",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "always_notify",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owners",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
     "name": "parameters",
     "type": "STRING",
     "mode": "NULLABLE"
   },
   {
-    "name": "timestamp",
+    "name": "acknowledge_timestamp",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "processed_timestamp",
     "type": "STRING",
     "mode": "NULLABLE"
   },
@@ -70,7 +75,7 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
-    "name": "message",
+    "name": "details",
     "type": "STRING",
     "mode": "NULLABLE"
   }

@@ -322,19 +322,19 @@ then
 
     # Create tasked default table if not exist
     echo "---> Creating empty tasked tasks table if not exist"
-    bq mk --table --description "$PULSAR_TASKED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TASKED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_TASKED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TASKED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create initiated default table if not exist
     echo "---> Creating empty initiated tasks table if not exist"
-    bq mk --table --description "$PULSAR_INITIATED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INITIATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_INITIATED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INITIATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create processed default table if not exist
     echo "---> Creating empty processed tasks table if not exist"
-    bq mk --table --description "$PULSAR_PROCESSED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_PROCESSED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_PROCESSED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_PROCESSED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
     # Create terminated default table if not exist
     echo "---> Creating empty terminated tasks table if not exist"
-    bq mk --table --description "$PULSAR_TERMINATED_TABLE_DESCRIPTION" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TERMINATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
+    bq mk --table --description "${PULSAR_TERMINATED_TABLE_DESCRIPTION}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_TERMINATED_TABLE_NAME}_${current_table_date}" "$TASK_SCHEMA"
 
   else
     echo "---> The deployment don't create default Pulsar BigQuery tables"

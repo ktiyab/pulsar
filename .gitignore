@@ -6,6 +6,7 @@ terraform/.terraform
 terraform/.terraform.lock.hcl
 terraform/tf.plan
 terraform/terraform*
-Tests/services-accounts/*.json
+tests/services-accounts/*.json
+tests/private.py
 *.zip
 app/README.txt

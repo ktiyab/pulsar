@@ -5,3 +5,7 @@ class Greeting(object):
     @staticmethod
     def get(name):
         return "Hello {}".format(name)
+
+    @staticmethod
+    def getSerhat(name):
+        return "Hello {}".format(name)

@@ -22,15 +22,17 @@ logger.addHandler(NullHandler())
 
 class Task(object):
 
-    READY_STATE = "ready"
-    RUNNABLE_STATE = "runnable"
-    COMPLETED_STATE = "completed"
-    INTERRUPTED_STATE = "interrupted"
+    READY_STATE = app_configs.READY_STATE
+    RUNNABLE_STATE = app_configs.RUNNABLE_STATE
+    COMPLETED_STATE = app_configs.COMPLETED_STATE
+    INTERRUPTED_STATE = app_configs.INTERRUPTED_STATE
 
     CURRENT_DATE = time.strftime("%Y%m%d", time.gmtime())
 
     def __init__(self):
         self.id = None
+        self.name = None
+        self.description = None
         self.app = deployment_context.APP_NAME
         self.service_account = deployment_context.SERVICE_ACCOUNT_EMAIL
         self.runtime = deployment_context.RUNTIME
@@ -49,6 +51,8 @@ class Task(object):
 
         return {
             "id": str(self.id) if self.id else "",
+            "name": str(self.name) if self.name else "",
+            "description": str(self.description) if self.description else "",
             "state": str(self.state) if self.state else "",
             "app": str(self.app) if self.app else "",
             "project_id": str(self.project_id) if self.project_id else "",
@@ -157,36 +161,47 @@ class Job(object):
             self.task.acknowledge()
 
             # Load task
-            self.task.id = run_context["event_id"]
+            self.task.id = run_context[app_configs.EVENT_ID_KEY]
             self.task.state = self.task.READY_STATE
             self.task.app = deployment_context.APP_NAME
-            self.task.project_id = run_context["project_id"]
-            self.task.region = run_context["region"]
-            self.task.service_account = run_context["service_account"]
+            self.task.project_id = run_context[app_configs.PROJECT_ID_KEY]
+            self.task.region = run_context[app_configs.REGION_KEY]
+            self.task.service_account = run_context[app_configs.SERVICE_ACCOUNT_KEY]
             self.task.runtime = deployment_context.RUNTIME
 
-            # Check if context is valid
-            is_valid_context, context_message = self.is_valid_context(run_context)
+            # Check if context (allowed Project and region) is valid
+            is_valid_context, check_context_message = self.is_valid_context(run_context)
 
             if not is_valid_context:
                 # Set task state status with message
-                self.task.failed(context_message)
+                self.task.failed(check_context_message)
 
             # Load data if exist
-            if self.task.success.lower() == "true" and self.key_exist("data", run_context):
+            if self.task.success.lower() == "true" and self.key_exist(app_configs.DATA_KEY, run_context):
 
                 # Check if required json data are present
-                is_valid_data, data_message = self.is_valid_data(run_context["data"])
+                is_valid_data, check_data_message = self.is_valid_data(run_context[app_configs.DATA_KEY])
 
                 if not is_valid_data:
-                    self.task.failed(data_message)
+                    self.task.failed(check_data_message)
                 else:
-                    self.task.always_notify = run_context["data"]["always_notify"]
-                    self.task.owners = run_context["data"]["owners"]
-                    self.task.parameters = run_context["data"]["parameters"]
+                    # Check parameters validity
+                    is_valid_parameters, check_parameters_message = self.is_allowed_parameters(
+                        run_context[app_configs.DATA_KEY][app_configs.PARAMETERS_KEY]
+                    )
+                    if not is_valid_parameters:
+                        self.task.failed(check_parameters_message)
+                    else:
+                        # Load user payload information - Refer to configurations.py > Json control keys
+                        self.task.name = run_context[app_configs.DATA_KEY][app_configs.NAME_KEY]
+                        self.task.description = run_context[app_configs.DATA_KEY][app_configs.DESCRIPTION_KEY]
+                        self.task.always_notify = run_context[app_configs.DATA_KEY][app_configs.NOTIFICATION_KEY]
+                        self.task.owners = run_context[app_configs.DATA_KEY][app_configs.OWNERS_KEY]
+                        self.task.parameters = run_context[app_configs.DATA_KEY][app_configs.PARAMETERS_KEY]
+
             # If no error, it's loaded successfully
             if self.task.success.lower() == "true":
-                self.task.succeed(app_configs.TASK_IS_LOAD.format(run_context["event_id"]))
+                self.task.succeed(app_configs.TASK_IS_LOAD.format(run_context[app_configs.EVENT_ID_KEY]))
 
             # Update timestamp
             self.task.processed()
@@ -206,7 +221,7 @@ class Job(object):
     def is_valid_data(self, json_data):
         """
         Check if all expected json data from user are filled
-        You can extend/modify json data with the configuration.py file
+        You can extend/modify EXPECTED_KEYS array in the configuration.py file
         :param json_data:
         :return: tuple
         """
@@ -218,6 +233,21 @@ class Job(object):
                 return False, app_configs.MISSING_JSON_KEY.format(key)
         return True, app_configs.JSON_KEYS_ARE_PRESENT
 
+    def is_allowed_parameters(self, parameters):
+        """
+        Check if parameter keys are allowed
+        You can extend/modify ALLOWED_PARAMETERS_KEYS array in the configuration.py file
+        :param parameters:
+        :return:
+        """
+        logger.info("--> Job.Job.is_allowed_parameters: Check if the json parameters contains allowed keys...")
+
+        allowed_keys = app_configs.ALLOWED_PARAMETERS_KEYS
+        for key in parameters:
+            if key not in allowed_keys:
+                return False, app_configs.NOT_ALLOWED_JSON_KEY
+        return True, app_configs.KEYS_ARE_ALLOWED
+
     def is_valid_context(self, run_context):
         """
         Run context must equal to deployment context (project_id, region, service_account)
@@ -226,13 +256,13 @@ class Job(object):
         """
         logger.info("--> Job.Job.is_valid_context: Checking context validity...")
 
-        if run_context["project_id"] != deployment_context.PROJECT_ID:
+        if run_context[app_configs.PROJECT_ID_KEY] != deployment_context.PROJECT_ID:
             return False, app_configs.CONTEXT_PROJECT_ID_ERROR
 
-        if run_context["region"] != deployment_context.REGION:
+        if run_context[app_configs.REGION_KEY] != deployment_context.REGION:
             return False, app_configs.CONTEXT_REGION_ERROR
 
-        if run_context["service_account"] != deployment_context.SERVICE_ACCOUNT_EMAIL:
+        if run_context[app_configs.SERVICE_ACCOUNT_KEY] != deployment_context.SERVICE_ACCOUNT_EMAIL:
             return False, app_configs.CONTEXT_SERVICE_ACCOUNT_ERROR
 
         return True, app_configs.CONTEXT_IS_VALID

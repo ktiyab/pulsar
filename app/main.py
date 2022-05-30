@@ -43,7 +43,6 @@ def run(event, context):
     try:
         # Get run context
         job_context = build_context(event, context)
-
         # Initialize task
         success, initialized_task = initialize(job_context)
 
@@ -100,21 +99,21 @@ def build_context(event, context):
     :return:
     """
     logger.info("---->Main.build_context: Decoding provided data.")
-    job_context = {"data": decode_event_data(event), "event_id": context.event_id}
+    job_context = {app_configs.DATA_KEY: decode_event_data(event), app_configs.EVENT_ID_KEY: context.event_id}
 
     # Extract pubsub event ID and Data
 
     # Set env info
     if os.getenv("GCP_PROJECT"):
         # Python 3.7 et Go 1.11 envs OR local tests
-        job_context["project_id"] = os.getenv("GCP_PROJECT")
-        job_context["region"] = os.getenv("FUNCTION_REGION")
-        job_context["service_account"] = os.getenv("FUNCTION_IDENTITY")
+        job_context[app_configs.PROJECT_ID_KEY] = os.getenv("GCP_PROJECT")
+        job_context[app_configs.REGION_KEY] = os.getenv("FUNCTION_REGION")
+        job_context[app_configs.SERVICE_ACCOUNT_KEY] = os.getenv("FUNCTION_IDENTITY")
     else:
-        # Other envs
-        job_context["project_id"] = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
-        job_context["region"] = get_metadata(app_configs.INTERNAL_REGION_INFO)
-        job_context["service_account"] = get_metadata(app_configs.INTERNAL_SERVICE_ACCOUNT_INFO)
+        # Get env info from GCP metadata
+        job_context[app_configs.PROJECT_ID_KEY] = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
+        job_context[app_configs.REGION_KEY] = get_metadata(app_configs.INTERNAL_REGION_INFO)
+        job_context[app_configs.SERVICE_ACCOUNT_KEY] = get_metadata(app_configs.INTERNAL_SERVICE_ACCOUNT_INFO)
 
     return job_context
 
@@ -142,9 +141,9 @@ def decode_event_data(event):
     :return: Json object or None
     """
     logger.info("---->Main.decode_event_data: Decoding provided data.")
-    if 'data' in event:
+    if app_configs.DATA_KEY in event:
         # Get json string
-        json_data = base64.b64decode(event['data'])
+        json_data = base64.b64decode(event[app_configs.DATA_KEY])
         # Json string to object
         return load_json_data(json_data)
 
@@ -177,7 +176,6 @@ def is_runnable(initialized_task):
     logger.info("--> Main.is_runnable: Loading task parameters...")
     # Always catch error
     try:
-        # Initialize new task
         # Initialize new task
         job_task = Job(initialized_task)
         # Load new task

@@ -2,14 +2,15 @@
 # Global variable for sendgrid and secret manager
 SENDGRID_SECRET_ID = "pulsar_sendgrid:latest"
 SENDGRID_API_KEY = ""
-SENDGRID_API_KEY_NAME = "pulsar_sendgrid_key"
+SENDGRID_API_KEY_NAME = "key"
 DEFAULT_MAIL_TO = ""
-DEFAULT_MAIL_TO_KEY_NAME = "default_mail_to"
+DEFAULT_MAIL_TO_KEY_NAME = "default_to"
 MAIL_FROM = ""
-MAIL_FROM_KEY_NAME = "mail_from"
+MAIL_FROM_KEY_NAME = "from"
 
 # Input json expected keys
-EXPECTED_KEYS = ["always_notify", "owners", "parameters"]
+EXPECTED_KEYS = ["name", "always_notify", "owners", "parameters"]
+ALLOWED_PARAMETERS_KEYS=["from", "run", "response_to"]
 
 # Error messages
 CONTEXT_PROJECT_ID_ERROR = "Run context project_id not equal to deployment project."
@@ -19,8 +20,39 @@ CONTEXT_SERVICE_ACCOUNT_ERROR = "Run context service_account not equal to deploy
 TASK_LOAD_FAILED = "Unable to load context information with message: {}"
 TASK_NOT_RUNNABLE = "The task is not runnable with message: {}"
 
+# Json control
 MISSING_JSON_KEY = "Missing required key < {} >, please provide it."
 JSON_KEYS_ARE_PRESENT = "All required keys are present."
+NOT_ALLOWED_JSON_KEY = "Found key < {} > which is not allowed, please correct it or update configuration."
+KEYS_ARE_ALLOWED = "All keys are allowed."
+
+# Json Keys
+PROJECT_ID_KEY="project_id"
+REGION_KEY="region"
+SERVICE_ACCOUNT_KEY="service_account"
+
+# Level 1 of the JSON
+EVENT_ID_KEY="event_id"
+DATA_KEY="data"
+
+# Level 2 of the JSON
+NAME_KEY="name"
+DESCRIPTION_KEY="description"
+NOTIFICATION_KEY="always_notify"
+OWNERS_KEY="owners"
+PARAMETERS_KEY="parameters"
+
+# Level 3 of the JSON
+PARAMS_FROM_KEY="from"
+PARAMS_RUN_KEY="run"
+PARAMS_RESPONSE_TO_KEY="response_to"
+
+# Task states
+READY_STATE = "ready"
+RUNNABLE_STATE = "runnable"
+COMPLETED_STATE = "completed"
+INTERRUPTED_STATE = "interrupted"
+
 
 # Success messages
 CONTEXT_IS_VALID = "Run context equal to deployment context"

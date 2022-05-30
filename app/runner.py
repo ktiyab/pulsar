@@ -31,7 +31,6 @@ class Runner(object):
         :param parameters:
         :return: Bool
         """
-
         try:
             if parameters:
                 # Check if run definition is set and load it

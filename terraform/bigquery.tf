@@ -15,6 +15,16 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "description",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
     "name": "state",
     "type": "STRING",
     "mode": "NULLABLE"

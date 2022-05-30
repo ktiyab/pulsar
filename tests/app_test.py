@@ -13,6 +13,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private.SERVICE_ACCOUNT_PATH
 print('Credentials from environ: {}'.format(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')))
 
 from app import main
+from app import configurations as app_configs
 from app.job import Task
 from app.runner import Runner
 
@@ -32,11 +33,14 @@ expected_response = "Hello Pulsar"
 
 custom_run = "{}.{}.{}.{}:{}".format(custom_package, custom_module, custom_class, custom_function, custom_parameters)
 data = {
- "always_notify": "true",
- "owners": "tiyab@gcpbees.com",
- "parameters": {
-        "run": custom_run,
-        "response_to": "topic_name"
+ app_configs.NAME_KEY: "Greeting",
+ app_configs.DESCRIPTION_KEY: "return: Hello <parameter>",
+ app_configs.NOTIFICATION_KEY: "true",
+ app_configs.OWNERS_KEY: "tiyab@gcpbees.com",
+ app_configs.PARAMETERS_KEY: {
+        app_configs.PARAMS_FROM_KEY: "None",
+        app_configs.PARAMS_RUN_KEY: custom_run,
+        app_configs.PARAMS_RESPONSE_TO_KEY: "topic_name"
   }
 }
 
@@ -53,13 +57,13 @@ class AppTest(unittest.TestCase):
         data_string = json.dumps(data)
         data_bytes = data_string.encode("utf-8")
         encoded_data = base64.b64encode(data_bytes)
-        event = {"data": encoded_data}
+        event = {app_configs.DATA_KEY: encoded_data}
         return event
 
     def test_extract(self):
 
         runner = Runner()
-        runner.load(data["parameters"])
+        runner.load(data[app_configs.PARAMETERS_KEY])
 
         self.assertEqual(runner.PACKAGE_REFERENCE, custom_package)
         self.assertEqual(runner.MODULE_REFERENCE, custom_module)
@@ -69,14 +73,14 @@ class AppTest(unittest.TestCase):
 
     def test_runner(self):
         runner = Runner()
-        success, response = runner.execute(data["parameters"])
+        success, response = runner.execute(data[app_configs.PARAMETERS_KEY])
         self.assertEqual(response, expected_response)
 
     def test_app_run(self):
 
         event_data = self.build_sample()
         run_context = main.run(event_data, Context)
-        self.assertEqual((run_context["event_id"], run_context["data"]), (event_id, data))
+        self.assertEqual((run_context[app_configs.EVENT_ID_KEY], run_context[app_configs.DATA_KEY]), (event_id, data))
 
     def test_app_task(self):
         new_job = Task()

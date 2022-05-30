@@ -1,8 +1,11 @@
 {
+	"name": "Greeting",
+	"description": "Say greeting.",
 	"always_notify": "true",
 	"owners": "tiyab@gcpbees.com",
 	"parameters": {
-		"run": "custom.sample.Greeting.get:Pulsar",
-		"response_to": "topic_name"
+		"from": "app_name:job_id",
+		"run": "custom.sample.Greeting.getSerhat:Serhat",
+		"response_to": "project:topic_name@package.module.class.function:Param1,Param2"
 	}
 }

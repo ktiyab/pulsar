@@ -43,6 +43,7 @@ def run(event, context):
     try:
         # Get run context
         job_context = build_context(event, context)
+
         # Initialize task
         success, initialized_task = initialize(job_context)
 
@@ -98,17 +99,31 @@ def build_context(event, context):
     :param context:
     :return:
     """
-    logger.info("---->Main.build_context: Decoding provided data.")
-    job_context = {app_configs.DATA_KEY: decode_event_data(event), app_configs.EVENT_ID_KEY: context.event_id}
+    logger.info("---->Main.build_context: Decoding provided data and load GCP context.")
+
+    event_data = decode_event_data(event)
+
+    if key_exist(app_configs.PROTO_PAYLOAD, event_data):
+        # Extract protoPayload data and build new job definition
+        job_proto = Job()
+        event_data = job_proto.load_proto_payload(event_data)
 
     # Extract pubsub event ID and Data
+    job_context = {app_configs.DATA_KEY: event_data, app_configs.EVENT_ID_KEY: context.event_id}
+
+    # Identify caller (Scheduler or Logging Sink)
+    if key_exist(app_configs.PROTO_PAYLOAD, event_data):
+        # Event is triggered from logging sink
+        job_context[app_configs.TRIGGER_TYPE] = app_configs.PROTO_PAYLOAD
+    else:
+        job_context[app_configs.TRIGGER_TYPE] = app_configs.SCHEDULER
 
     # Set env info
-    if os.getenv("GCP_PROJECT"):
+    if os.getenv(app_configs.ENV_GCP_PROJECT):
         # Python 3.7 et Go 1.11 envs OR local tests
-        job_context[app_configs.PROJECT_ID_KEY] = os.getenv("GCP_PROJECT")
-        job_context[app_configs.REGION_KEY] = os.getenv("FUNCTION_REGION")
-        job_context[app_configs.SERVICE_ACCOUNT_KEY] = os.getenv("FUNCTION_IDENTITY")
+        job_context[app_configs.PROJECT_ID_KEY] = os.getenv(app_configs.ENV_GCP_PROJECT)
+        job_context[app_configs.REGION_KEY] = os.getenv(app_configs.ENV_FUNCTION_REGION)
+        job_context[app_configs.SERVICE_ACCOUNT_KEY] = os.getenv(app_configs.ENV_FUNCTION_IDENTITY)
     else:
         # Get env info from GCP metadata
         job_context[app_configs.PROJECT_ID_KEY] = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
@@ -131,9 +146,7 @@ def get_metadata(internal_url):
     else:
         return str(response.text)
 
-# -- Decode data passed to the Cloud function
-
-
+# -- Decode data passed to the Cloud function  - - - - - - - - - - - -
 def decode_event_data(event):
     """
     Get event and extract json data
@@ -147,9 +160,7 @@ def decode_event_data(event):
         # Json string to object
         return load_json_data(json_data)
 
-# -- Transform json data into object
-
-
+# -- Transform json data into object  - - - - - - - - - - - -
 def load_json_data(json_string):
     """
     Try to convert string data into Json object
@@ -165,8 +176,6 @@ def load_json_data(json_string):
         return None
 
 # - - - - - TASK VALIDATION - - - - - - - - - - - - - - - - - -
-
-
 def is_runnable(initialized_task):
     """
     Try to load task parameters
@@ -202,3 +211,17 @@ def execute(runnable_task):
 
     except Exception as e:
         logger.error("--> Main.execute failed with error: " + str(e))
+
+# - - - - - UTILS - - - - - - - - - - - - - - - - - -
+def key_exist(key, json_object):
+    """
+    Check if key exist in json
+    :param key:
+    :param json_object:
+    :return: Bool
+    """
+    for key_name in json_object:
+        if key_name == key:
+            return True
+
+    return False

@@ -13,6 +13,7 @@ import context as deployment_context
 import configurations as app_configs
 from notification import Notice, Stream
 from runner import Runner
+from event import SinkTrigger
 
 # Instantiates logging client
 from logging import getLogger, NullHandler
@@ -137,10 +138,10 @@ class Job(object):
 
     def __init__(self, ongoing_task=None):
         if ongoing_task:
-            logger.info("--> Job.Job.init: Loading existing task...")
+            logger.info("--> job.Job.init: Loading existing task...")
             self.task = ongoing_task
         else:
-            logger.info("--> Job.Job.init: Creating new task...")
+            logger.info("--> job.Job.init: Creating new task...")
 
         # Load notification client
         self.NOTICE = Notice(self.task.project_id, self.task.app)
@@ -150,12 +151,12 @@ class Job(object):
         self.STREAM = Stream(self.task.project_id, self.task.app, self.task.region)
 
     def clean(self):
-        logger.info("--> Job.Job.clean: Cleaning task...")
+        logger.info("--> job.Job.clean: Cleaning task...")
         self.task = Task()
 
     # -------------- 1 - VALIDATE & LOAD TASK PARAMETERS ----------------------------------------
     def load(self, run_context):
-        logger.info("--> Job.Job.load: Loading task...")
+        logger.info("--> job.Job.load: Loading task...")
 
         try:
             self.task.acknowledge()
@@ -207,7 +208,7 @@ class Job(object):
             self.task.processed()
 
         except Exception as e:
-            logger.error("--> Job.Job.load: Unable to load context information with message: " + str(e))
+            logger.error("--> job.Job.load: Unable to load context information with message: " + str(e))
             self.task.failed(app_configs.TASK_LOAD_FAILED.format(str(e)))
             return False, None
         finally:
@@ -225,7 +226,7 @@ class Job(object):
         :param json_data:
         :return: tuple
         """
-        logger.info("--> Job.Job.is_valid_data: Check if the json contains all required keys...")
+        logger.info("--> job.Job.is_valid_data: Check if the json contains all required keys...")
         # Check if the json contains all required keys
         required_keys = app_configs.EXPECTED_KEYS
         for key in required_keys:
@@ -240,7 +241,7 @@ class Job(object):
         :param parameters:
         :return:
         """
-        logger.info("--> Job.Job.is_allowed_parameters: Check if the json parameters contains allowed keys...")
+        logger.info("--> job.Job.is_allowed_parameters: Check if the json parameters contains allowed keys...")
 
         allowed_keys = app_configs.ALLOWED_PARAMETERS_KEYS
         for key in parameters:
@@ -254,7 +255,7 @@ class Job(object):
         :param run_context: Running context of the cloud function
         :return: True or False
         """
-        logger.info("--> Job.Job.is_valid_context: Checking context validity...")
+        logger.info("--> job.Job.is_valid_context: Checking context validity...")
 
         if run_context[app_configs.PROJECT_ID_KEY] != deployment_context.PROJECT_ID:
             return False, app_configs.CONTEXT_PROJECT_ID_ERROR
@@ -274,7 +275,7 @@ class Job(object):
         Check if job task is runnable
         :return:
         """
-        logger.info("--> Job.Job.is_runnable: Check if task is runnable...")
+        logger.info("--> job.Job.is_runnable: Check if task is runnable...")
 
         try:
             # Update task state
@@ -289,7 +290,7 @@ class Job(object):
             self.task.update(success, response)
 
         except Exception as e:
-            logger.error("--> Job.Job.is_runnable: The task is not runnable with message : " + str(e))
+            logger.error("--> job.Job.is_runnable: The task is not runnable with message : " + str(e))
             self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
             return False, None
         finally:
@@ -306,7 +307,7 @@ class Job(object):
         Run a task
         :return: task
         """
-        logger.info("--> Job.Job.run: Running a task...")
+        logger.info("--> job.Job.run: Running a task...")
 
         try:
             # Update task state
@@ -321,7 +322,7 @@ class Job(object):
             self.task.update(success, response)
 
         except Exception as e:
-            logger.error("--> Job.Job.is_runnable: The task is not runnable with message : " + str(e))
+            logger.error("--> job.Job.is_runnable: The task is not runnable with message : " + str(e))
             self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
             return False, None
         finally:
@@ -331,6 +332,12 @@ class Job(object):
         self.broadcast()
 
         return True, self.task
+
+    # -------------- 4 - RUN TASK ----------------------------------------
+
+    def load_proto_payload(self, proto_payload):
+        sink = SinkTrigger()
+        return sink.load(proto_payload)
 
     # -------------- UTILS ----------------------------------------
 
@@ -353,7 +360,7 @@ class Job(object):
         :return:
         """
 
-        logger.info("--> Job.Job.notify: Checking notification status...")
+        logger.info("--> job.Job.notify: Checking notification status...")
         # If users ask to always has notification (even in success)
         # or if we have a task failure, send email
         if self.task.always_notify.lower() == "true" or self.task.success.lower() == "false":
@@ -369,7 +376,7 @@ class Job(object):
         Log task status into BigQuery
         :return:
         """
-        logger.info("--> Job.Job.push_into_bigquery: Stream task status into BigQuery...")
+        logger.info("--> job.Job.push_into_bigquery: Stream task status into BigQuery...")
         table_id = self.task.get_table_id()
         table_data = self.task.to_dict()
         self.STREAM.into_bigquery(table_id, table_data)

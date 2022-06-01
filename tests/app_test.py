@@ -16,6 +16,7 @@ from app import main
 from app import configurations as app_configs
 from app.job import Task
 from app.runner import Runner
+from app.event import SinkTrigger
 
 # Set test env
 os.environ["GCP_PROJECT"] = private.GCP_PROJECT
@@ -44,6 +45,28 @@ data = {
   }
 }
 
+gcs_resource = {
+    "protoPayload": {
+        "method_name": "storage.object.create",
+        "authenticationInfo": {
+            "principalEmail": "tiyab@gcpbees.com"
+        },
+        "requestMetadata": {
+            "callerIp": "127.0.0.1"
+        }
+    },
+    "resource": {
+        "type": "gcs_object",
+        "labels": {
+            "location": "europe-west1",
+            "project_id": "gcp_bees",
+            "bucket_name": "crm_data"
+        }
+    },
+    "resourceName": "/20220523/customers.csv",
+    "resourceOrigin":""
+}
+
 
 class Context:
     event_id = event_id
@@ -55,6 +78,15 @@ class AppTest(unittest.TestCase):
     def build_sample():
         # Create sample data in cloud function format
         data_string = json.dumps(data)
+        data_bytes = data_string.encode("utf-8")
+        encoded_data = base64.b64encode(data_bytes)
+        event = {app_configs.DATA_KEY: encoded_data}
+        return event
+
+    @staticmethod
+    def build_protopayload_sample():
+        # Create sample data in cloud function format
+        data_string = json.dumps(gcs_resource)
         data_bytes = data_string.encode("utf-8")
         encoded_data = base64.b64encode(data_bytes)
         event = {app_configs.DATA_KEY: encoded_data}
@@ -86,6 +118,16 @@ class AppTest(unittest.TestCase):
         new_job = Task()
         my_task = new_job.to_dict()
         self.assertEqual(type(my_task), dict)
+
+    def test_sink_trigger(self):
+        trigger = SinkTrigger()
+        response = trigger.load(gcs_resource)
+        print(response)
+
+    def test_run_proto_payload(self):
+        event_data = self.build_protopayload_sample()
+        run_context = main.run(event_data, Context)
+        self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
 
 
 if __name__ == '__main__':

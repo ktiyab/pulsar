@@ -1,4 +1,3 @@
-
 # Global variable for sendgrid and secret manager
 SENDGRID_SECRET_ID = "pulsar_sendgrid:latest"
 SENDGRID_API_KEY = ""
@@ -27,6 +26,18 @@ NOT_ALLOWED_JSON_KEY = "Found key < {} > which is not allowed, please correct it
 KEYS_ARE_ALLOWED = "All keys are allowed."
 
 # Json Keys
+ENV_GCP_PROJECT="GCP_PROJECT"
+ENV_FUNCTION_REGION="FUNCTION_REGION"
+ENV_FUNCTION_IDENTITY="FUNCTION_IDENTITY"
+
+SCHEDULER = "scheduler"
+PROTO_PAYLOAD = "protoPayload"
+TRIGGER_TYPE = "trigger_type"
+PROTO_PAYLOAD_NAME_SEP="_"
+
+PROTO_PAYLOAD_RESOURCE="resource"
+PROTO_PAYLOAD_TYPE="type"
+
 PROJECT_ID_KEY="project_id"
 REGION_KEY="region"
 SERVICE_ACCOUNT_KEY="service_account"
@@ -73,8 +84,28 @@ INTERNAL_PROJECT_INFO = INTERNAL_BASE_URL + "project/project-id"
 INTERNAL_REGION_INFO = INTERNAL_BASE_URL + "instance/region"
 INTERNAL_SERVICE_ACCOUNT_INFO = INTERNAL_BASE_URL + "instance/service-accounts/default/email"
 
-# Runner
+# Class Runner
 RUN_KEY = "run"
 MODULE_SEPARATOR = "."
 PARAMETERS_SEPARATOR = ":"
 VARIABLES_SEPARATOR = ","
+
+# Trigger resource loader
+# Refer libs.gcp.logging.sink and app.event
+TRIGGER_PACKAGE_REFERENCE = "libs.gcp.logging"
+TRIGGER_MODULE_REFERENCE = "sink"
+TRIGGER_FUNCTION = "as_json"
+
+TRIGGER_RUN = "custom.{}.{}.run:{}"
+TRIGGER_JOB_TEMPLATE = {
+    "name": "",
+    "description": "Triggered job",
+    "always_notify": "true",
+    "owners": "",
+    "parameters": {
+        "from": "Logging_sink",
+        "run": "",
+        "response_to": "None"
+    }
+}
+

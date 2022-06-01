@@ -1,3 +1,5 @@
+import time
+
 class Greeting(object):
     def __init__(self):
         pass
@@ -9,3 +11,8 @@ class Greeting(object):
     @staticmethod
     def getSerhat(name):
         return "Hello {}".format(name)
+
+    @staticmethod
+    def sleeper(sec):
+        time.sleep(int(sec))
+

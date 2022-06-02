@@ -43,7 +43,8 @@ We can then define 4 states for the tasks processed by the Cloud Function, each 
 
 - [Part 1: A reusable native Google Cloud App skeleton for events-based Functions](https://medium.com/@ktiyab_42514/pulsar-a-tutorial-of-a-reusable-native-google-cloud-app-skeleton-for-events-based-functions-part-83a1dd71a1be)
 - [Part 2: Designing an abstract and consistent infrastructure as a code](https://medium.com/@ktiyab_42514/pulsar-designing-an-abstract-and-consistent-infrastructure-as-a-code-part-2-10654bc630ed)
-- [Part 3: A better Cloud User Experience with interaction design conception (Coming soon)]
+- [Part 3: Ideation of a Cloud User Experience and interaction design conception](https://medium.com/@ktiyab_42514/pulsar-ideation-of-a-cloud-user-experience-and-interaction-design-conception-part-3-2d7533e917e3)
+- 
 
 ## Deployment
 

@@ -2,6 +2,7 @@ google-api-python-client==2.49.0
 google-cloud-logging==3.1.1
 google-cloud-bigquery==3.1.0
 google-cloud-secret-manager==2.11.0
+google-cloud-pubsub==2.12.1
 bs4
 sendgrid==6.9.7
 requests==2.27.1

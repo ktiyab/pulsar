@@ -39,36 +39,35 @@ def run(event, context):
     :return: Tuple (event_id, event_data)
     """
 
+    logger.info("--> Main.run: Running task...")
     # Always catch error
     try:
         # Get run context
         job_context = build_context(event, context)
 
-        # Initialize task
-        success, initialized_task = initialize(job_context)
-
-        if success:
-            # Check if task is runnable
-            success, runnable_task = is_runnable(initialized_task)
+        if job_context:
+            # Initialize task
+            success, initialized_task = initialize(job_context)
 
             if success:
-                # Execute task
-                success, completed_task = execute(runnable_task)
+                # Check if task is runnable
+                success, runnable_task = is_runnable(initialized_task)
 
-        # Always return the event_id  and the task
-        return job_context
+                if success:
+                    # Execute task
+                    success, completed_task = execute(runnable_task)
+
+            # Always return the event_id  and the task
+            return job_context
 
     except Exception as e:
         # Build emergency notification
-        project_id = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
-        app_name = app_context.APP_NAME
-
         details = "--> Main.run failed with error: " + str(e) + \
-                  " \n for app " + str(app_name) + \
-            " \n in the project " + str(project_id)
+                  " \n for app " + str(app_context.APP_NAME) + \
+            " \n in the project " + str(app_configs.GCP_PROJECT_ID)
         caption = str(app_context.APP_NAME).upper() + " failure"
         logger.error(details)
-        Notice(project_id, app_context.APP_NAME).failure(details, caption)
+        Notice(app_configs.GCP_PROJECT_ID, app_context.APP_NAME).failure(details, caption)
         pass
 
 # - - - - - TASK INITIALIZATION - - - - - - - - - - - - - - - - - -
@@ -80,7 +79,7 @@ def initialize(job_context):
     :param job_context:
     :return:
     """
-    logger.info("--> Main.tasked: Loading task...")
+    logger.info("--> Main.initialize: Loading task...")
     # Always catch error
     try:
         # Initialize new task
@@ -101,36 +100,55 @@ def build_context(event, context):
     """
     logger.info("---->Main.build_context: Decoding provided data and load GCP context.")
 
+    gcp_context = get_gcp_context()
     event_data = decode_event_data(event)
+    success = True
 
     if key_exist(app_configs.PROTO_PAYLOAD, event_data):
         # Extract protoPayload data and build new job definition
         job_proto = Job()
-        event_data = job_proto.load_proto_payload(event_data)
+        success, event_data = job_proto.load_proto_payload(event_data)
 
-    # Extract pubsub event ID and Data
-    job_context = {app_configs.DATA_KEY: event_data, app_configs.EVENT_ID_KEY: context.event_id}
+    if success:
+        # Extract pubsub event ID and Data
+        job_context = {app_configs.DATA_KEY: event_data, app_configs.EVENT_ID_KEY: context.event_id}
 
-    # Identify caller (Scheduler or Logging Sink)
-    if key_exist(app_configs.PROTO_PAYLOAD, event_data):
-        # Event is triggered from logging sink
-        job_context[app_configs.TRIGGER_TYPE] = app_configs.PROTO_PAYLOAD
+        # Identify caller (Scheduler or Logging Sink)
+        if key_exist(app_configs.PROTO_PAYLOAD, event_data):
+            # Event is triggered from logging sink
+            job_context[app_configs.TRIGGER_TYPE] = app_configs.PROTO_PAYLOAD
+        else:
+            job_context[app_configs.TRIGGER_TYPE] = app_configs.SCHEDULER
+
+            # Set env info
+            job_context.update(gcp_context)
+
+        return job_context
     else:
-        job_context[app_configs.TRIGGER_TYPE] = app_configs.SCHEDULER
+        return None
 
+
+def get_gcp_context():
     # Set env info
+    gcp_context = {}
     if os.getenv(app_configs.ENV_GCP_PROJECT):
         # Python 3.7 et Go 1.11 envs OR local tests
-        job_context[app_configs.PROJECT_ID_KEY] = os.getenv(app_configs.ENV_GCP_PROJECT)
-        job_context[app_configs.REGION_KEY] = os.getenv(app_configs.ENV_FUNCTION_REGION)
-        job_context[app_configs.SERVICE_ACCOUNT_KEY] = os.getenv(app_configs.ENV_FUNCTION_IDENTITY)
+        gcp_project_id = os.getenv(app_configs.ENV_GCP_PROJECT)
+        gcp_context[app_configs.REGION_KEY] = os.getenv(app_configs.ENV_FUNCTION_REGION)
+        gcp_context[app_configs.SERVICE_ACCOUNT_KEY] = os.getenv(app_configs.ENV_FUNCTION_IDENTITY)
     else:
         # Get env info from GCP metadata
-        job_context[app_configs.PROJECT_ID_KEY] = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
-        job_context[app_configs.REGION_KEY] = get_metadata(app_configs.INTERNAL_REGION_INFO)
-        job_context[app_configs.SERVICE_ACCOUNT_KEY] = get_metadata(app_configs.INTERNAL_SERVICE_ACCOUNT_INFO)
+        gcp_project_id = get_metadata(app_configs.INTERNAL_PROJECT_INFO)
+        gcp_context[app_configs.REGION_KEY] = get_metadata(app_configs.INTERNAL_REGION_INFO)
+        gcp_context[app_configs.SERVICE_ACCOUNT_KEY] = get_metadata(app_configs.INTERNAL_SERVICE_ACCOUNT_INFO)
 
-    return job_context
+    gcp_context[app_configs.PROJECT_ID_KEY] = gcp_project_id
+
+    # Set configs variables
+    app_configs.GCP_PROJECT_ID = gcp_project_id
+    app_configs.APP_NAME = app_context.APP_NAME
+
+    return gcp_context
 
 
 def get_metadata(internal_url):
@@ -147,6 +165,8 @@ def get_metadata(internal_url):
         return str(response.text)
 
 # -- Decode data passed to the Cloud function  - - - - - - - - - - - -
+
+
 def decode_event_data(event):
     """
     Get event and extract json data
@@ -161,6 +181,8 @@ def decode_event_data(event):
         return load_json_data(json_data)
 
 # -- Transform json data into object  - - - - - - - - - - - -
+
+
 def load_json_data(json_string):
     """
     Try to convert string data into Json object
@@ -176,6 +198,8 @@ def load_json_data(json_string):
         return None
 
 # - - - - - TASK VALIDATION - - - - - - - - - - - - - - - - - -
+
+
 def is_runnable(initialized_task):
     """
     Try to load task parameters
@@ -195,6 +219,8 @@ def is_runnable(initialized_task):
 
 
 # - - - - - TASK EXECUTION - - - - - - - - - - - - - - - - - -
+
+
 def execute(runnable_task):
     """
     Try to execute task
@@ -213,6 +239,8 @@ def execute(runnable_task):
         logger.error("--> Main.execute failed with error: " + str(e))
 
 # - - - - - UTILS - - - - - - - - - - - - - - - - - -
+
+
 def key_exist(key, json_object):
     """
     Check if key exist in json

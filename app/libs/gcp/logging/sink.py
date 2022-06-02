@@ -6,23 +6,24 @@ import time
 # https://cloud.google.com/logging/docs/view/query-library-preview
 
 
-class GcsObject(object):
+class GcsBucket(object):
     """
-    Resource type name is "gcs_object" > class GcsObject
+    Resource type name is "gcs_bucket" > class GcsBucket
     You can extend extracted values
     """
 
     @staticmethod
-    def as_json(payload):
+    def storage_objects_create(payload):
 
         """
-        Load key details as object
+        GCP methodName: storage.objects.create > function name: storage_objects_create
+        Load key values as json
         :param payload:
         :return:
         """
         return json.dumps({
-            "resourceType": payload["protoPayload"]["method_name"],
-            "methodName": payload["protoPayload"]["method_name"],
+            "resourceType": payload["resource"]["type"],
+            "methodName": payload["protoPayload"]["methodName"],
             "principalEmail": payload["protoPayload"]["authenticationInfo"]["principalEmail"],
             "callerIP": payload["protoPayload"]["requestMetadata"]["callerIp"],
             "resourceLocation": payload["resource"]["labels"]["location"],
@@ -32,33 +33,48 @@ class GcsObject(object):
             "timestamp": str(calendar.timegm(time.gmtime()))
         })
 
+    @staticmethod
+    def storage_objects_delete(payload):
 
-class BigqueryTable(object):
+        """
+        GCP methodName: storage.objects.delete > function name: storage_objects_delete
+        Load key values as json
+        :param payload:
+        :return:
+        """
+        return json.dumps({
+            "resourceType": payload["resource"]["type"],
+            "methodName": payload["protoPayload"]["methodName"],
+            "principalEmail": payload["protoPayload"]["authenticationInfo"]["principalEmail"],
+            "callerIP": payload["protoPayload"]["requestMetadata"]["callerIp"],
+            "resourceLocation": payload["resource"]["labels"]["location"],
+            "resourceProjectId": payload["resource"]["labels"]["project_id"],
+            "resourceBucketName": payload["resource"]["labels"]["bucket_name"],
+            "resourceName": payload["resource"]["labels"]["bucket_name"],
+            "timestamp": str(calendar.timegm(time.gmtime()))
+        })
+
+class BigqueryResource(object):
     """
     Resource type name is "bigquery_table" > class BigqueryTable
-    You can extend extracted values
+    Load key values as json
     """
 
     @staticmethod
-    def as_json(payload):
+    def tableservice_insert(payload):
+
         """
-        Extract data from logger payload
-        You can extend this class by adding resources you want to extract
+        GCP methodName: storage.objects.delete > function name: storage_objects_delete
+        Load key values as json
         :param payload:
+        :return:
         """
 
         return json.dumps({
             "resourceType": payload["resource"]["type"],
-            "methodName": payload["protoPayload"]["method_name"],
+            "methodName": payload["protoPayload"]["methodName"],
             "principalEmail": payload["protoPayload"]["authenticationInfo"]["principalEmail"],
-            "callerIP": payload["protoPayload"]["requestMetadata"]["callerIp "],
-            "resourceLocation": payload["protoPayload"]["serviceData"]["jobCompletedEvent"]
-            ["job"]["jobName"]["location"],
-            "resourceProjectId": payload["protoPayload"]["serviceData"]["jobCompletedEvent"]
-            ["job"]["jobConfiguration"]["load"]["destinationTable"]["projectId"],
-            "resourceDatasetId": payload["protoPayload"]["serviceData"]["jobCompletedEvent"]
-            ["job"]["jobConfiguration"]["load"]["destinationTable"]["datasetId"],
-            "resourceTableId": payload["protoPayload"]["serviceData"]["jobCompletedEvent"]
-            ["job"]["jobConfiguration"]["load"]["destinationTable"]["tableId"],
+            "callerIP": payload["protoPayload"]["requestMetadata"]["callerIp"],
+            "project_id": payload["resource"]["labels"]["project_id"],
             "timestamp": str(calendar.timegm(time.gmtime()))
         })

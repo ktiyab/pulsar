@@ -47,7 +47,7 @@ data = {
 
 gcs_resource = {
     "protoPayload": {
-        "method_name": "storage.object.create",
+        "methodName": "storage.objects.create",
         "authenticationInfo": {
             "principalEmail": "tiyab@gcpbees.com"
         },
@@ -56,15 +56,35 @@ gcs_resource = {
         }
     },
     "resource": {
-        "type": "gcs_object",
+        "type": "gcs_bucket",
         "labels": {
             "location": "europe-west1",
             "project_id": "gcp_bees",
             "bucket_name": "crm_data"
         }
     },
-    "resourceName": "/20220523/customers.csv",
-    "resourceOrigin":""
+    "resourceName": "projects/_/buckets/logs_sink_gcs",
+    "timestamp": "2022-06-01T23:04:53.682013137Z"
+}
+
+bq_resource = {
+    "protoPayload": {
+        "methodName":  "tableservice.insert",
+        "authenticationInfo": {
+            "principalEmail": "tiyab@gcpbees.com"
+        },
+        "requestMetadata": {
+            "callerIp": "127.0.0.1"
+        }
+    },
+    "resource": {
+        "type": "bigquery_resource",
+        "labels": {
+            "project_id": "gcp_bees"
+        }
+    },
+    "resourceName": "projects/pulsar/logs_sink_gcs/pulsing/tables",
+    "timestamp": "2022-06-01T23:04:53.682013137Z"
 }
 
 
@@ -84,9 +104,18 @@ class AppTest(unittest.TestCase):
         return event
 
     @staticmethod
-    def build_protopayload_sample():
+    def build_gcs_protopayload_sample():
         # Create sample data in cloud function format
         data_string = json.dumps(gcs_resource)
+        data_bytes = data_string.encode("utf-8")
+        encoded_data = base64.b64encode(data_bytes)
+        event = {app_configs.DATA_KEY: encoded_data}
+        return event
+
+    @staticmethod
+    def build_bq_protopayload_sample():
+        # Create sample data in cloud function format
+        data_string = json.dumps(bq_resource)
         data_bytes = data_string.encode("utf-8")
         encoded_data = base64.b64encode(data_bytes)
         event = {app_configs.DATA_KEY: encoded_data}
@@ -121,16 +150,22 @@ class AppTest(unittest.TestCase):
 
     def test_sink_trigger(self):
         trigger = SinkTrigger()
-        response = trigger.load(gcs_resource)
+        success, response = trigger.load(gcs_resource)
         print(response)
 
-    def test_run_proto_payload(self):
-        event_data = self.build_protopayload_sample()
+    def test_run_gcs_proto_payload(self):
+        event_data = self.build_gcs_protopayload_sample()
+        run_context = main.run(event_data, Context)
+        self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
+
+    def test_run_bq_proto_payload(self):
+        event_data = self.build_bq_protopayload_sample()
         run_context = main.run(event_data, Context)
         self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
 
 
 if __name__ == '__main__':
     unittest.main()
+
 
 

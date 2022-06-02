@@ -7,9 +7,13 @@ DEFAULT_MAIL_TO_KEY_NAME = "default_to"
 MAIL_FROM = ""
 MAIL_FROM_KEY_NAME = "from"
 
+# GCP context
+GCP_PROJECT_ID = ""
+APP_NAME = ""
+
 # Input json expected keys
 EXPECTED_KEYS = ["name", "always_notify", "owners", "parameters"]
-ALLOWED_PARAMETERS_KEYS=["from", "run", "response_to"]
+ALLOWED_PARAMETERS_KEYS = ["from", "run", "response_to"]
 
 # Error messages
 CONTEXT_PROJECT_ID_ERROR = "Run context project_id not equal to deployment project."
@@ -26,37 +30,39 @@ NOT_ALLOWED_JSON_KEY = "Found key < {} > which is not allowed, please correct it
 KEYS_ARE_ALLOWED = "All keys are allowed."
 
 # Json Keys
-ENV_GCP_PROJECT="GCP_PROJECT"
-ENV_FUNCTION_REGION="FUNCTION_REGION"
-ENV_FUNCTION_IDENTITY="FUNCTION_IDENTITY"
+ENV_GCP_PROJECT = "GCP_PROJECT"
+ENV_FUNCTION_REGION = "FUNCTION_REGION"
+ENV_FUNCTION_IDENTITY = "FUNCTION_IDENTITY"
 
 SCHEDULER = "scheduler"
 PROTO_PAYLOAD = "protoPayload"
 TRIGGER_TYPE = "trigger_type"
-PROTO_PAYLOAD_NAME_SEP="_"
+RESOURCE_TYPE_SEP = "_"
+PROTO_PAYLOAD_NAME_SEP = "."
+FUNCTION_NAME_SEP = "_"
 
-PROTO_PAYLOAD_RESOURCE="resource"
-PROTO_PAYLOAD_TYPE="type"
+PROTO_PAYLOAD_RESOURCE = "resource"
+PROTO_PAYLOAD_TYPE = "type"
 
-PROJECT_ID_KEY="project_id"
-REGION_KEY="region"
-SERVICE_ACCOUNT_KEY="service_account"
+PROJECT_ID_KEY = "project_id"
+REGION_KEY = "region"
+SERVICE_ACCOUNT_KEY = "service_account"
 
 # Level 1 of the JSON
-EVENT_ID_KEY="event_id"
-DATA_KEY="data"
+EVENT_ID_KEY = "event_id"
+DATA_KEY = "data"
 
 # Level 2 of the JSON
-NAME_KEY="name"
-DESCRIPTION_KEY="description"
-NOTIFICATION_KEY="always_notify"
-OWNERS_KEY="owners"
-PARAMETERS_KEY="parameters"
+NAME_KEY = "name"
+DESCRIPTION_KEY = "description"
+NOTIFICATION_KEY = "always_notify"
+OWNERS_KEY = "owners"
+PARAMETERS_KEY = "parameters"
 
 # Level 3 of the JSON
-PARAMS_FROM_KEY="from"
-PARAMS_RUN_KEY="run"
-PARAMS_RESPONSE_TO_KEY="response_to"
+PARAMS_FROM_KEY = "from"
+PARAMS_RUN_KEY = "run"
+PARAMS_RESPONSE_TO_KEY = "response_to"
 
 # Task states
 READY_STATE = "ready"
@@ -94,9 +100,8 @@ VARIABLES_SEPARATOR = ","
 # Refer libs.gcp.logging.sink and app.event
 TRIGGER_PACKAGE_REFERENCE = "libs.gcp.logging"
 TRIGGER_MODULE_REFERENCE = "sink"
-TRIGGER_FUNCTION = "as_json"
 
-TRIGGER_RUN = "custom.{}.{}.run:{}"
+TRIGGER_RUN = "custom.{}.{}.{}:{}"
 TRIGGER_JOB_TEMPLATE = {
     "name": "",
     "description": "Triggered job",
@@ -108,4 +113,3 @@ TRIGGER_JOB_TEMPLATE = {
         "response_to": "None"
     }
 }
-

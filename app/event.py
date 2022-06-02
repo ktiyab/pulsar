@@ -1,12 +1,22 @@
+# -*- coding: utf-8 -*-
+# By Tiyab KONLAMBIGUE
+# GCP PULSAR ALPHA - A cloud function skeleton for events based app
+# mailto : tiyab@gcpbees.com | ktiyab@gmail.com
+
+# -- Definitions: event purpose is to manage logs sink data
+# This class calls dynamically classes associated to the events
+
 import configurations as app_configs
+
 import importlib
 import base64
+import requests
 
 # Instantiates logging client
 from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 logger.addHandler(NullHandler())
-
+from notification import Notice
 
 class SinkTrigger(object):
     def __init__(self):
@@ -20,13 +30,13 @@ class SinkTrigger(object):
         logger.info("--> event.SinkTrigger.load: Load Cloud Logging Sink trigger parameters...")
 
         try:
-            # Extract resource type name
+            # -- Extract resource type name and generate class name --
             resource_type = payload["resource"]["type"]
 
             # Build class name by using resource type name (gsc_object > GcsObject)
             # Refer to app.libs.logging.sink
 
-            name_array = resource_type.split(app_configs.PROTO_PAYLOAD_NAME_SEP)
+            name_array = resource_type.split(app_configs.RESOURCE_TYPE_SEP)
             class_reference = ""
             for name in name_array:
                 class_reference = class_reference + name.capitalize()
@@ -35,6 +45,7 @@ class SinkTrigger(object):
             _module = importlib.import_module("{}.{}".format(app_configs.TRIGGER_PACKAGE_REFERENCE,
                                                              app_configs.TRIGGER_MODULE_REFERENCE)
                                               )
+
             # Arg
             arg = [payload]
 
@@ -42,7 +53,13 @@ class SinkTrigger(object):
             _class = getattr(_module, class_reference)
 
             # Load function with parameters if exist
-            resource_data = getattr(_class, app_configs.TRIGGER_FUNCTION)(*arg)
+
+            # -- Extract method name and generate object name --
+            method_name = payload["protoPayload"]["methodName"]
+
+            function_reference = method_name.replace(app_configs.PROTO_PAYLOAD_NAME_SEP, app_configs.FUNCTION_NAME_SEP)
+
+            resource_data = getattr(_class, function_reference)(*arg)
 
             # Build job definition
             # Run path - Always based on the GCP resource name
@@ -52,16 +69,35 @@ class SinkTrigger(object):
             encoded_data_bytes = base64.b64encode(data_bytes)
             encoded_data = encoded_data_bytes.decode("utf-8")
 
-            run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, encoded_data)
+            run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, function_reference, encoded_data)
 
             loaded_sink_job = app_configs.TRIGGER_JOB_TEMPLATE
             loaded_sink_job[app_configs.NAME_KEY] = resource_type
             loaded_sink_job[app_configs.PARAMETERS_KEY][app_configs.PARAMS_RUN_KEY] = run
 
-            return loaded_sink_job
+            return True, loaded_sink_job
 
         except Exception as e:
+            # Build message and caption
             message = "event.SinkTrigger.load: Unable to execute with error " + str(e)
+            caption = str(app_configs.APP_NAME).upper() + " failure"
+
+            # Send error message
+            Notice(app_configs.GCP_PROJECT_ID, app_configs.APP_NAME).failure(message, caption)
+            # Log error
             logger.error("--->" + message)
-            return None, message
+            return False, message
             pass
+
+    def get_metadata(self, internal_url):
+        """
+        Get GCP internal meta data
+        :param internal_url:
+        :return: Object
+        """
+        logger.info("---->Main.get_metadata: Getting GCP internal meta data.")
+        response = requests.get(url=internal_url, headers={'Metadata-Flavor': 'Google'})
+        if internal_url == app_configs.INTERNAL_REGION_INFO:
+            return str(response.text.split("/")[3])
+        else:
+            return str(response.text)

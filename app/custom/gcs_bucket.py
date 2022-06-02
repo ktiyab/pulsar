@@ -1,10 +1,10 @@
 import base64
 
 
-class GcsObject(object):
+class GcsBucket(object):
 
     @staticmethod
-    def run(payload):
+    def storage_objects_create(payload):
 
         base64_str = payload.encode("utf-8")
         base64_bytes = base64.b64decode(base64_str)

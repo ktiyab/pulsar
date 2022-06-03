@@ -85,7 +85,7 @@ Configure sendgrid with your API Key
 
 [Coming soon]
 
-### Leverage built in event management system
+### Leverage the built-in events management system
 
 [Coming soon]
 

@@ -85,6 +85,7 @@ bq_resource = {
     "timestamp": "2022-06-01T23:04:53.682013137Z"
 }
 
+
 class Context:
     event_id = event_id
 

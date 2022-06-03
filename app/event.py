@@ -15,7 +15,7 @@ import requests
 from logging import getLogger, NullHandler
 logger = getLogger(__name__)
 logger.addHandler(NullHandler())
-from notification import Notice
+
 
 class SinkTrigger(object):
     def __init__(self):
@@ -71,8 +71,9 @@ class SinkTrigger(object):
             run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, function_reference, encoded_data)
 
             loaded_sink_job = app_configs.JOB_TEMPLATE
-            loaded_sink_job[app_configs.NAME_KEY] = resource_type
-            loaded_sink_job[app_configs.DESCRIPTION_KEY] = app_configs.TRIGGERED_DESCRIPTION
+            loaded_sink_job[app_configs.NAME_KEY] = "{} {}".format(class_reference, function_reference)
+            loaded_sink_job[app_configs.DESCRIPTION_KEY] = app_configs.TRIGGERED_DESCRIPTION\
+                .format(resource_type, method_name)
             loaded_sink_job[app_configs.PARAMETERS_KEY][app_configs.PARAMS_FROM_KEY] = app_configs.TRIGGERED_FROM
             loaded_sink_job[app_configs.PARAMETERS_KEY][app_configs.PARAMS_RUN_KEY] = run
 
@@ -81,11 +82,6 @@ class SinkTrigger(object):
         except Exception as e:
             # Build message and caption
             message = "event.SinkTrigger.load: Unable to execute with error " + str(e)
-            caption = str(app_configs.APP_NAME).upper() + " failure"
-
-            # Send error message
-            Notice(app_configs.GCP_PROJECT_ID, app_configs.APP_NAME).failure(message, caption)
-            # Log error
             logger.error("--->" + message)
             return False, message
             pass

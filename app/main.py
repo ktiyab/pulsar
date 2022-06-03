@@ -112,7 +112,7 @@ def build_context(event, context):
     if key_exist(app_configs.PROTO_PAYLOAD, event_data):
         # Extract protoPayload data and build new job definition
         job_proto = Job()
-        success, event_data = job_proto.load_proto_payload(event_data)
+        success, event_data = job_proto.load_proto_payload(event_data, gcp_context, context.event_id)
 
     if success:
         # Extract pubsub event ID and Data

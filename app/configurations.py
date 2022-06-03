@@ -58,6 +58,7 @@ DATA_KEY = "data"
 NAME_KEY = "name"
 DESCRIPTION_KEY = "description"
 ALERT_LEVEL_KEY = "alert_level"
+DEFAULT_ALERT_LEVEL = "1"
 OWNERS_KEY = "owners"
 PARAMETERS_KEY = "parameters"
 
@@ -122,7 +123,7 @@ JOB_TEMPLATE = {
 }
 
 TRIGGER_RUN = CUSTOM_PACKAGE + ".{}.{}.{}:{}"
-TRIGGERED_DESCRIPTION = "Triggered job"
+TRIGGERED_DESCRIPTION = "Triggered job from logs sink monitoring {} and methodName {}."
 TRIGGERED_FROM = "Logs_sink"
 
 # Forward to topic

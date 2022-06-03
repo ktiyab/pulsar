@@ -202,14 +202,11 @@ class Job(object):
 
             # If no error, it's loaded successfully
             if self.task.success.lower() == "true":
-                self.task.succeed(app_configs.TASK_IS_LOAD.format(run_context[app_configs.EVENT_ID_KEY]))
-
-            # Update timestamp
-            self.task.processed()
+                self.task.update(True, app_configs.TASK_IS_LOAD.format(run_context[app_configs.EVENT_ID_KEY]))
 
         except Exception as e:
             logger.error("--> job.Job.load: Unable to load context information with message: " + str(e))
-            self.task.failed(app_configs.TASK_LOAD_FAILED.format(str(e)))
+            self.task.update(False, app_configs.TASK_LOAD_FAILED.format(str(e)))
             return False, None
         finally:
             pass
@@ -291,7 +288,7 @@ class Job(object):
 
         except Exception as e:
             logger.error("--> job.Job.is_runnable: The task is not runnable with message : " + str(e))
-            self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
+            self.task.update(False, app_configs.TASK_NOT_RUNNABLE.format(str(e)))
             return False, None
         finally:
             pass
@@ -323,7 +320,7 @@ class Job(object):
 
         except Exception as e:
             logger.error("--> job.Job.is_runnable: The task is not runnable with message : " + str(e))
-            self.task.failed(app_configs.TASK_NOT_RUNNABLE.format(str(e)))
+            self.task.update(False, app_configs.TASK_NOT_RUNNABLE.format(str(e)))
             return False, None
         finally:
             pass
@@ -335,9 +332,44 @@ class Job(object):
 
     # -------------- 4 - Load proto-payload ----------------------------------------
 
-    def load_proto_payload(self, proto_payload):
-        sink = SinkTrigger()
-        return sink.load(proto_payload)
+    def load_proto_payload(self, proto_payload, gcp_context, event_id):
+        """
+        Run proto-payload task data load
+        :return: task
+        """
+        logger.info("--> job.Job.load_proto_payload: Running proto-payload task load...")
+        self.task.acknowledge()
+        try:
+            sink = SinkTrigger()
+            success, data = sink.load(proto_payload)
+        except Exception as e:
+            logger.error("--> job.Job.is_runnable: The task is not runnable with message : " + str(e))
+            success = False
+            data = str(e)
+        finally:
+            pass
+
+        # If proto-payload load failed
+        if not success:
+            # Update task details and status for tracing
+            self.task.id = event_id
+            self.task.processed()
+            self.task.name = app_configs.TRIGGERED_FROM
+            self.task.alert_level = app_configs.DEFAULT_ALERT_LEVEL
+            self.task.description = app_configs.TRIGGERED_DESCRIPTION
+            self.task.app = deployment_context.APP_NAME
+            self.task.runtime = deployment_context.RUNTIME
+            self.task.project_id = gcp_context[app_configs.PROJECT_ID_KEY]
+            self.task.region = gcp_context[app_configs.REGION_KEY]
+            self.task.service_account = gcp_context[app_configs.SERVICE_ACCOUNT_KEY]
+            self.task.parameters = json.dumps(proto_payload)
+            self.task.update(False, app_configs.TASK_NOT_RUNNABLE.format(data))
+
+            # Stream and notify
+            self.broadcast()
+
+        return success, data
+
 
     # -------------- 5 - Forward task response -------------------------------------
 
@@ -371,8 +403,11 @@ class Job(object):
             else:
                 return False, None
         except Exception as e:
-            logger.error("--> job.Job.forward: The forwarding failed with message : " + str(e))
-            self.task.failed(app_configs.TASK_NOT_FORWARDABLE.format(str(e)))
+            message = "--> job.Job.forward: The forwarding failed with message : " + str(e)
+            logger.error(message)
+            # Stream and notify
+            self.broadcast()
+            self.job_failure(message)
             pass
             return False, None
 
@@ -415,6 +450,14 @@ class Job(object):
             return params
         else:
             return None
+
+    # -------------- 6 - Failed job response -------------------------------------
+    def job_failure(self, message="Unknown failure"):
+        logger.error("--> job.Job.failed: The task failed with message : " + str(message))
+        self.task.failed(message)
+
+        # Stream and notify
+        self.broadcast()
 
     # -------------- UTILS ----------------------------------------
 

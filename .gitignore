@@ -2,6 +2,7 @@ venv*
 .idea
 resources
 app/context.py
+app/secrets.py
 secrets/*.json
 terraform/.terraform
 terraform/.terraform.lock.hcl

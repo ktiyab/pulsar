@@ -81,7 +81,15 @@ Configure sendgrid with your API Key
   - Modify the "pulsar_sendgrid_key" variable in the file with your Sendgrid API key
   - Rename your file pulsar_sendgrid.json
 
-### Add your custom function class
+### Add your custom functionalities with custom classes
+
+[Coming soon]
+
+### Leverage built in event management system
+
+[Coming soon]
+
+### Jobs definitions with pulsar
 
 [Coming soon]
 

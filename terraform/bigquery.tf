@@ -55,7 +55,7 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
-    "name": "always_notify",
+    "name": "alert_level",
     "type": "STRING",
     "mode": "NULLABLE"
   },

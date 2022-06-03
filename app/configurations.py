@@ -12,7 +12,7 @@ GCP_PROJECT_ID = ""
 APP_NAME = ""
 
 # Input json expected keys
-EXPECTED_KEYS = ["name", "always_notify", "owners", "parameters"]
+EXPECTED_KEYS = ["name", "alert_level", "owners", "parameters"]
 ALLOWED_PARAMETERS_KEYS = ["from", "run", "response_to"]
 
 # Error messages
@@ -22,6 +22,7 @@ CONTEXT_SERVICE_ACCOUNT_ERROR = "Run context service_account not equal to deploy
 
 TASK_LOAD_FAILED = "Unable to load context information with message: {}"
 TASK_NOT_RUNNABLE = "The task is not runnable with message: {}"
+TASK_NOT_FORWARDABLE = "The task response is not forwardable with message: {}"
 
 # Json control
 MISSING_JSON_KEY = "Missing required key < {} >, please provide it."
@@ -47,6 +48,7 @@ PROTO_PAYLOAD_TYPE = "type"
 PROJECT_ID_KEY = "project_id"
 REGION_KEY = "region"
 SERVICE_ACCOUNT_KEY = "service_account"
+TOPIC_KEY = "topic"
 
 # Level 1 of the JSON
 EVENT_ID_KEY = "event_id"
@@ -55,7 +57,7 @@ DATA_KEY = "data"
 # Level 2 of the JSON
 NAME_KEY = "name"
 DESCRIPTION_KEY = "description"
-NOTIFICATION_KEY = "always_notify"
+ALERT_LEVEL_KEY = "alert_level"
 OWNERS_KEY = "owners"
 PARAMETERS_KEY = "parameters"
 
@@ -70,6 +72,8 @@ RUNNABLE_STATE = "runnable"
 COMPLETED_STATE = "completed"
 INTERRUPTED_STATE = "interrupted"
 
+# Alert level
+SEND_ALERT_LEVELS = ["1", "2"]
 
 # Success messages
 CONTEXT_IS_VALID = "Run context equal to deployment context"
@@ -96,20 +100,34 @@ MODULE_SEPARATOR = "."
 PARAMETERS_SEPARATOR = ":"
 VARIABLES_SEPARATOR = ","
 
+#Custom package
+CUSTOM_PACKAGE = "custom"
+
 # Trigger resource loader
 # Refer libs.gcp.logging.sink and app.event
 TRIGGER_PACKAGE_REFERENCE = "libs.gcp.logging"
 TRIGGER_MODULE_REFERENCE = "sink"
 
-TRIGGER_RUN = "custom.{}.{}.{}:{}"
-TRIGGER_JOB_TEMPLATE = {
+PLACE_HOLDER = "{}"
+JOB_TEMPLATE = {
     "name": "",
-    "description": "Triggered job",
-    "always_notify": "true",
+    "description": "",
+    "alert_level": "1",
     "owners": "",
     "parameters": {
-        "from": "Logging_sink",
+        "from": "",
         "run": "",
-        "response_to": "None"
+        "response_to": ""
     }
 }
+
+TRIGGER_RUN = CUSTOM_PACKAGE + ".{}.{}.{}:{}"
+TRIGGERED_DESCRIPTION = "Triggered job"
+TRIGGERED_FROM = "Logs_sink"
+
+# Forward to topic
+TOPIC_PROJECT_SEP = "@"
+TOPIC_MESSAGE_KEY = "message"
+FORWARD_NAME = " forwarded response"
+FORWARD_DESCRIPTION = "forwarded job"
+FORWARD_FROM = "pulsar"

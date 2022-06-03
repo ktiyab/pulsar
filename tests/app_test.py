@@ -25,7 +25,7 @@ os.environ["FUNCTION_IDENTITY"] = private.FUNCTION_IDENTITY
 
 # Set test data
 event_id = str(uuid.uuid1())
-custom_package = "custom"
+custom_package = app_configs.CUSTOM_PACKAGE
 custom_module = "sample"
 custom_class = "Greeting"
 custom_function = "get"
@@ -36,12 +36,10 @@ custom_run = "{}.{}.{}.{}:{}".format(custom_package, custom_module, custom_class
 data = {
  app_configs.NAME_KEY: "Greeting",
  app_configs.DESCRIPTION_KEY: "return: Hello <parameter>",
- app_configs.NOTIFICATION_KEY: "true",
+ app_configs.ALERT_LEVEL_KEY: "1",
  app_configs.OWNERS_KEY: "tiyab@gcpbees.com",
  app_configs.PARAMETERS_KEY: {
-        app_configs.PARAMS_FROM_KEY: "None",
-        app_configs.PARAMS_RUN_KEY: custom_run,
-        app_configs.PARAMS_RESPONSE_TO_KEY: "topic_name"
+        app_configs.PARAMS_RUN_KEY: custom_run
   }
 }
 
@@ -83,10 +81,9 @@ bq_resource = {
             "project_id": "gcp_bees"
         }
     },
-    "resourceName": "projects/pulsar/logs_sink_gcs/pulsing/tables",
+    "resourceName": "projects/pulsar/logs_sink_gcs/pulsar/tables",
     "timestamp": "2022-06-01T23:04:53.682013137Z"
 }
-
 
 class Context:
     event_id = event_id
@@ -116,6 +113,19 @@ class AppTest(unittest.TestCase):
     def build_bq_protopayload_sample():
         # Create sample data in cloud function format
         data_string = json.dumps(bq_resource)
+        data_bytes = data_string.encode("utf-8")
+        encoded_data = base64.b64encode(data_bytes)
+        event = {app_configs.DATA_KEY: encoded_data}
+        return event
+
+    @staticmethod
+    def build_forward_sample():
+        # Create sample data in cloud function format
+        data_forward_to = data
+        data_forward_to[app_configs.PARAMETERS_KEY][app_configs.PARAMS_RESPONSE_TO_KEY] \
+            = private.GCP_PROJECT + "." + private.TOPIC_NAME + "@custom.sample.Greeting.get: Forwarded {}"
+
+        data_string = json.dumps(data_forward_to)
         data_bytes = data_string.encode("utf-8")
         encoded_data = base64.b64encode(data_bytes)
         event = {app_configs.DATA_KEY: encoded_data}
@@ -160,6 +170,12 @@ class AppTest(unittest.TestCase):
 
     def test_run_bq_proto_payload(self):
         event_data = self.build_bq_protopayload_sample()
+        run_context = main.run(event_data, Context)
+        self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
+
+
+    def test_run_forward_response(self):
+        event_data = self.build_forward_sample()
         run_context = main.run(event_data, Context)
         self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
 

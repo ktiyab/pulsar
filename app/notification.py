@@ -12,6 +12,7 @@ import configurations as app_configs
 from libs.gcp.sendgrid import client as sendgrid_client
 from libs.gcp.secret_manager import client as secretmanager
 from libs.gcp.bigquery import client as bigquery
+from libs.gcp.pubsub import client as pubsub
 
 # Instantiates logging client
 from logging import getLogger, NullHandler
@@ -36,52 +37,65 @@ class Notice(object):
 
     def load_secrets(self):
 
-        logger.info("--> notification.Notice.load_secrets: Loading app secret from GCP.")
-        project_secrets = secretmanager.SecretManagerClient(self.PROJECT_ID)
+        try:
 
-        # Load Sendgrid configs
-        sendgrid_json_string = project_secrets.get_secret_by_project(app_configs.SENDGRID_SECRET_ID)
-        sendgrid_json_object = json.loads(sendgrid_json_string)
+            logger.info("--> notification.Notice.load_secrets: Loading app secret from GCP.")
+            project_secrets = secretmanager.SecretManagerClient(self.PROJECT_ID)
 
-        app_configs.SENDGRID_API_KEY = sendgrid_json_object[app_configs.SENDGRID_API_KEY_NAME]
-        app_configs.DEFAULT_MAIL_TO = sendgrid_json_object[app_configs.DEFAULT_MAIL_TO_KEY_NAME]
-        app_configs.MAIL_FROM = sendgrid_json_object[app_configs.MAIL_FROM_KEY_NAME]
+            # Load Sendgrid configs
+            sendgrid_json_string = project_secrets.get_secret_by_project(app_configs.SENDGRID_SECRET_ID)
+            sendgrid_json_object = json.loads(sendgrid_json_string)
 
-        return True
+            app_configs.SENDGRID_API_KEY = sendgrid_json_object[app_configs.SENDGRID_API_KEY_NAME]
+            app_configs.DEFAULT_MAIL_TO = sendgrid_json_object[app_configs.DEFAULT_MAIL_TO_KEY_NAME]
+            app_configs.MAIL_FROM = sendgrid_json_object[app_configs.MAIL_FROM_KEY_NAME]
+            return True
+
+        except Exception as e:
+            logger.error("--> notification.Notice.load_secrets: Unable to load secret with message: " + str(e))
 
     def success(self, body, subject=None, mailing_list=None):
         logger.info("--> notification.Notice.success: Creating success email.")
 
-        # Load default info if not provided
-        if not mailing_list:
-            mailing_list = app_configs.DEFAULT_MAIL_TO
+        try:
 
-        if not subject:
-            subject = app_configs.DEFAULT_SUCCESS_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
+            # Load default info if not provided
+            if not mailing_list:
+                mailing_list = app_configs.DEFAULT_MAIL_TO
 
-        templating_body = self.build_template(subject, body, True)
+            if not subject:
+                subject = app_configs.DEFAULT_SUCCESS_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
 
-        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list, subject,
-                                 templating_body, app_configs.SENDGRID_API_KEY)
+            templating_body = self.build_template(subject, body, True)
 
-        return True
+            self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list, subject,
+                                     templating_body, app_configs.SENDGRID_API_KEY)
+
+            return True
+
+        except Exception as e:
+            logger.error("--> notification.Notice.success: Unable to send success message with message: " + str(e))
 
     def failure(self, body, subject=None, mailing_list=None):
         logger.info("-->notification.Notice.failure: Creating failure email.")
 
-        # Load default info if not provided
-        if not mailing_list:
-            mailing_list = app_configs.DEFAULT_MAIL_TO
+        try:
+            # Load default info if not provided
+            if not mailing_list:
+                mailing_list = app_configs.DEFAULT_MAIL_TO
 
-        if not subject:
-            subject = app_configs.DEFAULT_FAILURE_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
+            if not subject:
+                subject = app_configs.DEFAULT_FAILURE_SUBJECT.format(self.PROJECT_ID, self.APP_NAME)
 
-        templating_body = self.build_template(subject, body, False)
+            templating_body = self.build_template(subject, body, False)
 
-        self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list,
-                                 subject, templating_body, app_configs.SENDGRID_API_KEY)
+            self.MAILING_CLIENT.send(app_configs.MAIL_FROM, mailing_list,
+                                     subject, templating_body, app_configs.SENDGRID_API_KEY)
 
-        return True
+            return True
+
+        except Exception as e:
+            logger.error("--> notification.Notice.success: Unable to send failure message with message: " + str(e))
 
     def build_template(self, title, message, success=False):
         logger.info("---> notification.Notice.build_template: Building mail template")
@@ -125,3 +139,17 @@ class Stream(object):
         project_bigquery = bigquery.BigQueryClient(self.PROJECT_ID, self.LOCATION)
         project_bigquery.stream_into_table(self.PROJECT_ID, self.DATASET_ID, self.LOCATION,
                                            table_id, json_data_object)
+
+
+class Publish(object):
+
+    PROJECT_ID = None
+    TOPIC_NAME = None
+
+    def __init__(self, project_id, topic_name):
+        self.PROJECT_ID = project_id
+        self.TOPIC_NAME = topic_name
+
+    def into_pubsub(self, message):
+        project_pubsub = pubsub.PubSubClient(self.PROJECT_ID)
+        project_pubsub.publish(message, self.TOPIC_NAME)

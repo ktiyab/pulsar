@@ -5,7 +5,6 @@
 
 # -- Definitions: event purpose is to manage logs sink data
 # This class calls dynamically classes associated to the events
-
 import configurations as app_configs
 
 import importlib
@@ -71,8 +70,10 @@ class SinkTrigger(object):
 
             run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, function_reference, encoded_data)
 
-            loaded_sink_job = app_configs.TRIGGER_JOB_TEMPLATE
+            loaded_sink_job = app_configs.JOB_TEMPLATE
             loaded_sink_job[app_configs.NAME_KEY] = resource_type
+            loaded_sink_job[app_configs.DESCRIPTION_KEY] = app_configs.TRIGGERED_DESCRIPTION
+            loaded_sink_job[app_configs.PARAMETERS_KEY][app_configs.PARAMS_FROM_KEY] = app_configs.TRIGGERED_FROM
             loaded_sink_job[app_configs.PARAMETERS_KEY][app_configs.PARAMS_RUN_KEY] = run
 
             return True, loaded_sink_job

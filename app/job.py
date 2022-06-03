@@ -4,14 +4,14 @@
 # mailto : tiyab@gcpbees.com | ktiyab@gmail.com
 
 # Definitions: A "job" is a complete unit of work under execution. A job is made up of many steps or "tasks"
-
+import base64
 import calendar
 import time
 import json
 
 import context as deployment_context
 import configurations as app_configs
-from notification import Notice, Stream
+from notification import Notice, Stream, Publish
 from runner import Runner
 from event import SinkTrigger
 
@@ -38,7 +38,7 @@ class Task(object):
         self.service_account = deployment_context.SERVICE_ACCOUNT_EMAIL
         self.runtime = deployment_context.RUNTIME
         self.state = None
-        self.always_notify = "false"
+        self.alert_level = "false"
         self.owners = None
         self.project_id = deployment_context.PROJECT_ID
         self.region = deployment_context.REGION
@@ -60,7 +60,7 @@ class Task(object):
             "region": str(self.region) if self.region else "",
             "service_account": str(self.service_account) if self.service_account else "",
             "runtime": str(self.runtime) if self.runtime else "",
-            "always_notify": str(self.always_notify) if self.always_notify else "",
+            "alert_level": str(self.alert_level) if self.alert_level else "",
             "owners": str(self.owners) if self.owners else "",
             "parameters": str(self.parameters) if self.parameters else "",
             "acknowledge_timestamp": str(self.acknowledge_timestamp) if self.acknowledge_timestamp else "",
@@ -196,7 +196,7 @@ class Job(object):
                         # Load user payload information - Refer to configurations.py > Json control keys
                         self.task.name = run_context[app_configs.DATA_KEY][app_configs.NAME_KEY]
                         self.task.description = run_context[app_configs.DATA_KEY][app_configs.DESCRIPTION_KEY]
-                        self.task.always_notify = run_context[app_configs.DATA_KEY][app_configs.NOTIFICATION_KEY]
+                        self.task.alert_level = run_context[app_configs.DATA_KEY][app_configs.ALERT_LEVEL_KEY]
                         self.task.owners = run_context[app_configs.DATA_KEY][app_configs.OWNERS_KEY]
                         self.task.parameters = run_context[app_configs.DATA_KEY][app_configs.PARAMETERS_KEY]
 
@@ -333,11 +333,88 @@ class Job(object):
 
         return True, self.task
 
-    # -------------- 4 - RUN TASK ----------------------------------------
+    # -------------- 4 - Load proto-payload ----------------------------------------
 
     def load_proto_payload(self, proto_payload):
         sink = SinkTrigger()
         return sink.load(proto_payload)
+
+    # -------------- 5 - Forward task response -------------------------------------
+
+    def forward(self):
+        """
+        Forward task response
+        :return: task
+        """
+        logger.info("--> job.Job.forward: Forward a task response if set...")
+
+        try:
+
+            # Check if forwarding is set
+            params = self.task.parameters
+
+            if self.key_exist(app_configs.PARAMS_RESPONSE_TO_KEY, params):
+
+                call_params = self.get_topic_call_params(params[app_configs.PARAMS_RESPONSE_TO_KEY])
+
+                if call_params:
+                    publish = Publish(call_params[app_configs.PROJECT_ID_KEY], call_params[app_configs.TOPIC_KEY])
+
+                    message_string = json.dumps(call_params[app_configs.TOPIC_MESSAGE_KEY])
+                    data_encoded = message_string.encode("utf-8")
+
+                    publish.into_pubsub(data_encoded)
+
+                    return True, "Message forwarded"
+                else:
+                    return False, None
+            else:
+                return False, None
+        except Exception as e:
+            logger.error("--> job.Job.forward: The forwarding failed with message : " + str(e))
+            self.task.failed(app_configs.TASK_NOT_FORWARDABLE.format(str(e)))
+            pass
+            return False, None
+
+    def get_topic_call_params(self, full_topic_params):
+        params = {}
+        full_topic_array = full_topic_params.split(app_configs.TOPIC_PROJECT_SEP)
+
+        if len(full_topic_array) == 2:
+            # Extract project_id and topic_name
+            params[app_configs.PROJECT_ID_KEY] = full_topic_array[0].split(app_configs.MODULE_SEPARATOR)[0]
+            params[app_configs.TOPIC_KEY] = full_topic_array[0].split(app_configs.MODULE_SEPARATOR)[1]
+
+            # Set response if placeholder is set
+            if app_configs.PLACE_HOLDER in str(full_topic_array[1]):
+                full_response = str(full_topic_array[1]).format(self.task.details)
+
+            # Check if response must be consumed by a pulsar_topic
+            # If yes build job params
+            if app_configs.CUSTOM_PACKAGE in full_response:
+                job_to_forward = app_configs.JOB_TEMPLATE
+
+                # Set configs default name and description
+                job_to_forward[app_configs.NAME_KEY] = self.task.name + app_configs.FORWARD_NAME
+                job_to_forward[app_configs.DESCRIPTION_KEY] = app_configs.FORWARD_DESCRIPTION
+
+                # Use principal jobs configs
+                job_to_forward[app_configs.ALERT_LEVEL_KEY] = self.task.alert_level
+                job_to_forward[app_configs.OWNERS_KEY] = self.task.owners
+
+                # Load run parameters
+                job_to_forward[app_configs.PARAMETERS_KEY][app_configs.PARAMS_RUN_KEY] = full_response
+                # Set default from
+                job_to_forward[app_configs.PARAMETERS_KEY][app_configs.PARAMS_FROM_KEY] = app_configs.FORWARD_FROM
+
+                # Override full response with job to forward definition
+                full_response = job_to_forward
+
+            params[app_configs.TOPIC_MESSAGE_KEY] = full_response
+
+            return params
+        else:
+            return None
 
     # -------------- UTILS ----------------------------------------
 
@@ -357,16 +434,29 @@ class Job(object):
     def notify(self):
         """
         Send notification if required about job status
+        Notification level are:
+        - 0 : Only failures
+        - 1 : Only completed tasks
+        - 2 : All task states
         :return:
         """
 
         logger.info("--> job.Job.notify: Checking notification status...")
-        # If users ask to always has notification (even in success)
+        # If alert level is 1 or 2
         # or if we have a task failure, send email
-        if self.task.always_notify.lower() == "true" or self.task.success.lower() == "false":
+        if self.task.alert_level.lower() in app_configs.SEND_ALERT_LEVELS \
+                or self.task.success.lower() == "false":
+
+            # If task succeeded
             if self.task.success.lower() == "true":
-                self.NOTICE.success(self.task.to_html(), None, self.task.owners)
+                # If alert level is 1 and task is at the completed state (Alert only on task complete)
+                # or if alert level is 2 (alert at any success state)
+                if (self.task.alert_level == "1" and self.task.state == app_configs.COMPLETED_STATE) \
+                        or (self.task.alert_level == "2"):
+
+                    self.NOTICE.success(self.task.to_html(), None, self.task.owners)
             else:
+                # If task failed
                 self.NOTICE.failure(self.task.to_html(), None, self.task.owners)
 
         return True

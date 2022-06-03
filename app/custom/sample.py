@@ -9,7 +9,7 @@ class Greeting(object):
         return "Hello {}".format(name)
 
     @staticmethod
-    def getSerhat(name):
+    def say(name):
         return "Hello {}".format(name)
 
     @staticmethod

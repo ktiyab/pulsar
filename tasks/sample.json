@@ -1,11 +1,9 @@
 {
 	"name": "Greeting",
 	"description": "Say greeting.",
-	"always_notify": "true",
+	"alert_level": "1",
 	"owners": "tiyab@gcpbees.com",
 	"parameters": {
-		"from": "app_name:job_id",
-		"run": "custom.sample.Greeting.getSerhat:Serhat",
-		"response_to": "project:topic_name@package.module.class.function:Param1,Param2"
+		"run": "custom.sample.Greeting.say:Serhat"
 	}
 }

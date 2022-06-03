@@ -286,24 +286,36 @@ then
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
     pwd
-    echo "---> Loading Cloud Scheduler sample configurations in path $PULSAR_TASKS_FOLDER/$PULSAR_TASK_SAMPLE_JSON"
-    MESSAGE_BODY=$(cat "../${PULSAR_TASKS_FOLDER}/${PULSAR_TASK_SAMPLE_JSON}")
-    echo "$MESSAGE_BODY"
+
+    # -- -- Loop tasks folder and load files
+    for filename in ../"$PULSAR_TASKS_FOLDER"/*"$PULSAR_TASKS_EXT"; do
+        [ -e "$filename" ] || continue
+
+        # Clean and extract task name
+        echo "---------------------------------"
+        echo "Found task $filename"
+        task_name="${filename//.json}"
+        task_name="${task_name//"../$PULSAR_TASKS_FOLDER/"}"
+
+        echo "---> Loading Cloud Scheduler sample configurations in path $PULSAR_TASKS_FOLDER/$filename"
+        MESSAGE_BODY=$(cat "../${PULSAR_TASKS_FOLDER}/$filename")
+        echo "$MESSAGE_BODY"
 
 
-    #---------------- - Try to delete scheduler if exist and create new one
-    echo "---> Trying to delete existing scheduler... "
-    # Delete old sample if exist
-    gcloud beta scheduler jobs delete "$PULSAR_TASK_SAMPLE_NAME" \
-                                      --location="$REGION" \
-    # Create scheduler
-    echo "---> Scheduling the task JSON with the cron $PULSAR_TASK_SAMPLE_CRON"
-    gcloud beta scheduler jobs create pubsub "$PULSAR_TASK_SAMPLE_NAME" \
-                                            --description="$PULSAR_TASK_SAMPLE_DESCRIPTION" \
-                                            --location="$REGION" \
-                                            --schedule="$PULSAR_TASK_SAMPLE_CRON" \
-                                            --topic="$PULSAR_TOPIC" \
-                                            --message-body="$MESSAGE_BODY"
+        #---------------- - Try to delete scheduler if exist and create new one
+        echo "---> Trying to delete existing scheduler for $filename... "
+        # Delete old sample if exist
+        gcloud beta scheduler jobs delete "$task_name" \
+                                          --location="$REGION" \
+        # Create scheduler
+        echo "---> Scheduling the task JSON with the cron $PULSAR_TASK_SAMPLE_CRON"
+        gcloud beta scheduler jobs create pubsub "$task_name" \
+                                                --description="$PULSAR_TASK_SAMPLE_DESCRIPTION" \
+                                                --location="$REGION" \
+                                                --schedule="$PULSAR_TASK_SAMPLE_CRON" \
+                                                --topic="$PULSAR_TOPIC" \
+                                                --message-body="$MESSAGE_BODY"
+    done
 
   else
     echo "---> The Cloud Scheduler sample is not deployed"

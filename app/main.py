@@ -40,6 +40,7 @@ def run(event, context):
     """
 
     logger.info("--> Main.run: Running task...")
+
     # Always catch error
     try:
         # Get run context
@@ -56,6 +57,10 @@ def run(event, context):
                 if success:
                     # Execute task
                     success, completed_task = execute(runnable_task)
+
+                    if success:
+                        # Send response to pubsub if set
+                        success, forwarded_status = forward(completed_task)
 
             # Always return the event_id  and the task
             return job_context
@@ -234,6 +239,26 @@ def execute(runnable_task):
         job_task = Job(runnable_task)
         # Run
         return job_task.run()
+
+    except Exception as e:
+        logger.error("--> Main.execute failed with error: " + str(e))
+
+# - - - - - RESPONSE FORWARDING - - - - - - - - - - - - - - - - - -
+
+
+def forward(completed_task):
+    """
+    Try to forward task response
+    :param completed_task:
+    :return: Task
+    """
+    logger.info("--> Main.execute: Executing task...")
+    # Always catch error
+    try:
+        # Load ongoing task
+        job_task = Job(completed_task)
+        # Run
+        return job_task.forward()
 
     except Exception as e:
         logger.error("--> Main.execute failed with error: " + str(e))

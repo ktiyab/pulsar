@@ -78,7 +78,7 @@ https://console.cloud.google.com/iam-admin/serviceaccounts
 ### Sendgrid API
 Configure sendgrid with your API Key
   - Modify the "mail_from" and "default_mail_to" variable in the folder secrets\pulsar_sendgrid.template_json file with your Sendgrid verified email
-  - Modify the "pulsar_sendgrid_key" variable in the file with your Sengrid API key
+  - Modify the "pulsar_sendgrid_key" variable in the file with your Sendgrid API key
   - Rename your file pulsar_sendgrid.json
 
 ### Add your custom function class

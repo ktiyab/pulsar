@@ -19,7 +19,7 @@ class GcsBucket(object):
         GCP methodName: storage.objects.create > function name: storage_objects_create
         Load key values as json
         :param payload:
-        :return:
+        :return:JSON str
         """
         return json.dumps({
             "resourceType": payload["resource"]["type"],
@@ -40,7 +40,7 @@ class GcsBucket(object):
         GCP methodName: storage.objects.delete > function name: storage_objects_delete
         Load key values as json
         :param payload:
-        :return:
+        :return:JSON str
         """
         return json.dumps({
             "resourceType": payload["resource"]["type"],
@@ -67,7 +67,7 @@ class BigqueryResource(object):
         GCP methodName: storage.objects.delete > function name: storage_objects_delete
         Load key values as json
         :param payload:
-        :return:
+        :return:JSON str
         """
 
         return json.dumps({

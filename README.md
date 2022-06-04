@@ -98,9 +98,23 @@ To configure SendGrid you need a corporate email address (pseudo@custom_domain.c
 You can activate the SendGrid service for your GCP account at this link: https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email
 
   - [Follow instruction to Activate SendGrid add-on on GCP and obtain you API key](https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email)
-  - Modify the "mail_from" and "default_mail_to" variable in the folder **"/secrets/pulsar_sendgrid.template_json"** file with your Sendgrid verified email
-  - Modify the "pulsar_sendgrid_key" variable in the file with your Sendgrid API key
+  - Modify the "default_to" and "from" variable in the folder **"/secrets/pulsar_sendgrid.template_json"** file with your Sendgrid verified email.
+      - The **"id"** represents the reference of the key;
+      - The **"key"** represents your Sendgrid key;
+      - The **"default_to"** represents the default email that must receive alerts in case of system failure;
+      - The **"from"** must be the email you use to register in Sendgrid.
+    
+  - Modify the "key" variable in the file with your Sendgrid API key
   - Rename your file pulsar_sendgrid.json
+
+```json
+{
+  "id": "pulsar_sendgrid",
+  "key": "<SENDGRID_KEY>",
+  "default_to": "<DEFAULT_ALERT_EMAIL_DESTINATION>",
+  "from": "<EMAIL_REGISTERED_IN_SENDGRID>"
+}
+```
 
 More about creating a SendGrid API key: https://docs.sendgrid.com/ui/account-and-settings/api-keys#creating-an-api-key
 
@@ -110,7 +124,7 @@ More about creating a SendGrid API key: https://docs.sendgrid.com/ui/account-and
 
 You can add you custom classes in the package folder **"/app/custom/"**, and can execute it from the scheduler call by indicating the path to your class with parameters.
 
-For example, if you have a module name "sample.py", with the class "Greeting" inside and you want to call the function "get(name):", 
+For example, if you have a module name **sample.py"**, with the class **"Greeting"** inside and you want to call the function **"get(name):"** below how you can do it: 
 
 ```python
 class Greeting(object):
@@ -130,20 +144,21 @@ You have to call it from a Cloud Scheduler liked to the Pulsar topic in this man
 	"alert_level": "1",
 	"owners": "tiyab@gcpbees.com",
 	"parameters": {
-		"run": "custom.sample.Greeting.say:Serhat"
+		"run": "custom.sample.Greeting.get:Serhat"
 	}
 }
 ```
 All json key are mandatory:
 
-- The name is that of your work, which is used to identify it among other things in notifications and analyzes
-- The description of your job
-- For alert_level you have 3 ones
+- The **"name"** is that of your job, which is used to identify it among other jobs in notifications and analyzes
+- The **"description"** of your job
+- For **"alert_level"** you have 3 ones
   - Level 0, send alerts only on failure
   - Level 1, send alerts on failure or job completion
   - Level 2, send alerts on every state of the job task
-- With "owners" key, you can indicate people you want to notify by email, separate email with pipe (gjuliette@pular.com|droman@pulsar.com)
-- Parameters allow you to indicate which function to run, you can do it by providing your function to "run" path: package.module.class.function:Param1,Param2
+- With **"owners"** key, you can indicate people you want to notify by email, separate email with pipe (gjuliette@pular.com|droman@pulsar.com)
+- **"Parameters"** allow you to indicate which function to run:
+  - you can do it by providing your function to "run" path in this way: package.module.class.function:Param1,Param2
 
 ### 3.1 - Pass executed function result to another pubsub
 
@@ -159,8 +174,8 @@ class Greeting(object):
         return "Hello {}".format(name)
 
     @staticmethod
-    def say(name):
-        return "Hello {}".format(name)
+    def say(message):
+        return "{}".format(message)
 ```
 
 This definition below from Cloud Scheduler allows to run the first function and pass the result to the second one:
@@ -173,14 +188,14 @@ This definition below from Cloud Scheduler allows to run the first function and 
   "owners": "tiyab@gcpbees.com",
   "parameters": {
     "run": "custom.sample.Greeting.get:Pulsar",
-    "response_to": "gcpbees-test.pulsar-topic@custom.sample.Greeting.get: Forwarded {}"
+    "response_to": "gcpbees-test.pulsar-topic@custom.sample.Greeting.say:Forwarded {}"
   }
 }
 ```
-The response_to key allow to activate this response forwarding functionalities:
+The **"response_to"** key allow to activate this response forwarding functionalities:
 
-- by indicating the PROJECT_ID.TOPIC_ID:{} the response will by send to a topic ({} will be replace with your data)
-- if the topic is a pulsar one, you can indicate the function you want to target
+- by indicating the project id and the topic in this way: **"PROJECT_ID.TOPIC_ID:{}"**. The response will by send to a topic ({} will be replace with your data)
+- if the topic is a pulsar one, you can indicate the function you want to target by adding **"@package.module.class.function:{}"**.
 
 You must favor responses in JSON in terms of data returned by your functions.
 
@@ -280,16 +295,36 @@ This reflection system allows you to quickly create and extend event-based funct
 
 ## IV - Deploy your app
 
-The shell script for Pulsar deployment in the "scripts" folder allow to deploy the your app by using Google Cloud CLI. 
+### 4.1 - Deployment with native GCP CLI (stable)
+
+The shell scripts for Pulsar deployment in the "scripts" folder allow to deploy the your app by using Google Cloud CLI. 
 
 - 1 - Install Google Cloud CLI from this link: https://cloud.google.com/sdk/docs/install 
-- 2 - Create a service account with your application permissions scope in GCP (Step described above)
-- 3 - The deployment command below will guide you through the questions/responses process (Y/N) in order to configure or not services. For the first deployment, you have to create items/configure all services, but for update the script allows you to skip some parts of the deployment. 
+- 2 - Create a deployment service/user account with permissions for GCP services listed above.
+- 3 - Open the folder "/scripts/" from you command line
+- 4 - The deployment command below will guide you through the questions/responses process (Y/N) in order to configure or not services. For the first deployment, you have to create items/configure all services, but for update the script allows you to skip some parts of the deployment. 
 You must always accept GCS files redeployment in order to do cloud function redeployment
 ```shell
-./deploy.sh "APP-NAME"  "PROJECT-ID"  "REGION"  "EXISTING-SERVICE-ACCOUNT-EMAIL"
+$./deploy.sh "APP-NAME"  "PROJECT-ID"  "REGION"  "EXISTING-SERVICE-ACCOUNT-EMAIL"
 ```
-- 4 - Removal command: 
+- 5 - Removal command: you can remove specific app by running command below
 ```shell
-./remove.sh "APP-NAME"  "PROJECT-ID"  "REGION"
+$./remove.sh "APP-NAME"  "PROJECT-ID"  "REGION"
+```
+
+### 4.2 - Deployment with terraform (ongoing - not stable yet)
+
+The "terraform" folder contains the terraform script for deployment.
+More about terraform: https://learn.hashicorp.com/tutorials/terraform/install-cli?in=terraform/gcp-get-started
+
+- 1.a - (Only for local tests) Execute the command below to create default credential
+```shell
+$ gcloud auth application-default login --no-browser
+```
+- 1.b - Instead of using default credential, it's recommended to create a dedicated service account to terraform
+- 2 Deploy
+```shell
+$ terraform init 
+$ terraform plan -var="PULSAR_NAME=[APP-NAME]" -var="PROJECT_ID=[PROJECT-ID]" -var="PULSAR_REGION=[REGION]" -var="SERVICE_ACCOUNT_EMAIL=[SERVICE-ACCOUNT-EMAIL]" -out=tf.plan
+$ terraform apply "tf.plan"
 ```

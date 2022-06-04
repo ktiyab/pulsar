@@ -9,10 +9,11 @@ class Greeting(object):
         return "Hello {}".format(name)
 
     @staticmethod
-    def say(name):
-        return "Hello {}".format(name)
+    def say(message):
+        return "{}".format(message)
 
     @staticmethod
     def sleeper(sec):
         time.sleep(int(sec))
+        return "Process waited {} seconds.".format(sec)
 

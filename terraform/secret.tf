@@ -1,18 +1,16 @@
 # TODO: Make it work like the shell script
 # Load json files from secret folder contents
 locals {
-  # https://www.terraform.io/language/functions/fileset
-  json_files = fileset(path.module,"${var.PULSAR_SECRETS_FOLDER}/*.json")
-  json_data  = [ for f in local.json_files : jsondecode(file("${path.module}/${f}")) ]
+  PULSAR_SENDGRID_SECRET_NAME=var.PULSAR_SENDGRID_SECRET
+  PULSAR_SENDGRID_SECRET_JSON_FILE="${local.PULSAR_SENDGRID_SECRET_NAME}${var.PULSAR_SECRET_EXT}"
 }
 
 # Create a secret for each json file
-resource "google_secret_manager_secret" "pulsar_secret" {
+resource "google_secret_manager_secret" "pulsar_secret_name" {
   provider = google-beta
   project = var.PROJECT_ID
 
-  for_each = { for f in local.json_data : f.id => f }
-  secret_id = each.value.id
+  secret_id = local.PULSAR_SENDGRID_SECRET_NAME
 
   replication {
     automatic = true
@@ -20,8 +18,9 @@ resource "google_secret_manager_secret" "pulsar_secret" {
 }
 
 # Add the secret data for each json file
-resource "google_secret_manager_secret_version" "pulsar_secret" {
-  for_each = { for f in local.json_data : f.id => f }
-  secret = each.value.id
-  secret_data = jsonencode(each.value)
+resource "google_secret_manager_secret_version" "pulsar_secret_data" {
+  provider = google-beta
+  secret = google_secret_manager_secret.pulsar_secret_name.id
+  secret_data = file("${path.module}${path.module}/${var.PULSAR_SECRETS_FOLDER}/${local.PULSAR_SENDGRID_SECRET_JSON_FILE}")
+  depends_on = [google_secret_manager_secret.pulsar_secret_name]
 }

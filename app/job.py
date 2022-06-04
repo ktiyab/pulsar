@@ -370,7 +370,6 @@ class Job(object):
 
         return success, data
 
-
     # -------------- 5 - Forward task response -------------------------------------
 
     def forward(self):

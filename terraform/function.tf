@@ -41,25 +41,37 @@ resource "google_project_service" "pulsar_cloud_build_service" {
 }
 
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/cloudfunctions2_function
-resource "google_cloudfunctions_function" "pulsar_function" {
+resource "google_cloudfunctions2_function" "pulsar_function" {
 
-  project = var.PROJECT_ID
+  provider = google-beta
   name = var.PULSAR_NAME
-  region=var.PULSAR_REGION
+  location = var.PULSAR_REGION
 
-  runtime = var.PULSAR_RUNTIME
-  entry_point = var.PULSAR_ENTRY_POINT
-  source_archive_bucket = google_storage_bucket.pulsar_bucket.name
-  source_archive_object = google_storage_bucket_object.pulsar_gcs_zip.name
-  max_instances  = var.PULSAR_MAX_INSTANCE
-  min_instances = var.PULSAR_MIN_INSTANCE
-  available_memory_mb = var.PULSAR_MEMORY
-  timeout = var.PULSAR_TIMEOUT
-  service_account_email=local.SERVICE_ACCOUNT_EMAIL
+  build_config {
+    runtime = var.PULSAR_RUNTIME
+    entry_point = var.PULSAR_ENTRY_POINT
+
+    source {
+      storage_source {
+        bucket = google_storage_bucket.pulsar_bucket.name
+        object = google_storage_bucket_object.pulsar_gcs_zip.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count  = var.PULSAR_MAX_INSTANCE
+    min_instance_count = var.PULSAR_MIN_INSTANCE
+    available_memory = var.PULSAR_MEMORY
+    timeout_seconds = var.PULSAR_TIMEOUT
+    service_account_email=local.SERVICE_ACCOUNT_EMAIL
+  }
 
   event_trigger {
-      event_type    = "google.pubsub.topic.publish"
-      resource      = google_pubsub_topic.pulsar_topic.name
+      trigger_region = var.PULSAR_REGION
+      event_type = "google.cloud.pubsub.topic.v1.messagePublished"
+      pubsub_topic = google_pubsub_topic.pulsar_topic.id
+      service_account_email=local.SERVICE_ACCOUNT_EMAIL
   }
 
   depends_on = [google_storage_bucket_object.pulsar_gcs_zip, google_pubsub_topic.pulsar_topic]

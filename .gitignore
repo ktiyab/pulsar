@@ -5,6 +5,7 @@ app/context.py
 app/secrets.py
 secrets/*.json
 terraform/.terraform
+terraform/.terraform.tfstate.lock.info
 terraform/.terraform.lock.hcl
 terraform/tf.plan
 terraform/terraform*

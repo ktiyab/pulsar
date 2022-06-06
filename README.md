@@ -10,27 +10,29 @@ The Google Cloud Functions are wonderful on demand-service allowing us to create
 
 - A built-in notification by email functionality that allows being alerted about tasks status (failures and successes);
 - A built-in analytics capability with a monitoring dashboard;
-- A built-in events manager " system that allows to easily create event-based functions;
+- A built-in events manager system that allows to easily create event-based functions;
 - A built-in secret manager system;
 - A built-in tasks cycle monitoring system.
 
 ### 1.1 - The skeleton architecture
-Pulsar aim to provide a reusable framework skeleton for scalable Cloud Function Apps. This can be done by leveraging Cloud Function 2nd Gen to create an events-based App (for less than 1hour processing jobs) strengthen with services like:
+Pulsar provide a reusable framework skeleton for scalable Cloud Function Apps. This can be done by leveraging Cloud Function 2nd Gen to create an events-based App (for less than 1hour processing jobs) strengthen with services like:
 
-- Cloud Scheduler: for a manual or for the time-based run
-- Cloud Logs Sinks: for executions based on event triggers from other cloud services.
-- Cloud PubSub: as the messaging layer
-- Cloud function 2nd Gen: for on-demand processing resource
-- Cloud Storage: for persistent storage to keep files (input and output)
-- BigQuery: to add observable and an analytical layer on top of the app
-- SendGrid: for the alerting emails to share jobs states
-- Secret Manager: for keeping sensitive data instead of hardcoded them in your function (SendGrid key for example)
+- Cloud Scheduler: for a manual the time-based run;
+- Cloud Logs Sinks: for executions based on event triggers from other cloud services;
+- Cloud PubSub: as the messaging layer;
+- Cloud function 2nd Gen: for on-demand processing resource;
+- Cloud Storage: for persistent storage to keep files (input and output);
+- BigQuery: to add observable and an analytical layer on top of the app;
+- SendGrid: for the alerting emails to notify jobs states;
+- Secret Manager: for keeping sensitive data instead of hardcoded them in your function (SendGrid key for example);
 
 ![Pulsar architecture schema](readme/pulsar_schema.png)
 
-- The input instructions will come from auto-managed services like Cloud Scheduler and Logs Sinks for programmed or triggered events.
-- Pub/Sub will serve as messaging service allowing our cloud function to be highly reliable and scalable
-- The processing part of our framework will be managed by Cloud Function coupled with Secret Manager which keeps our versioned secrets. Secret Manager will be used for example to host securely our SendGrid APIs key.
+How does this architecture work? 
+
+- The input instructions will come from auto-managed services like Cloud Scheduler and Logs Sinks for programmed or triggered events;
+- Pub/Sub will serve as messaging service allowing our cloud function to be highly reliable and scalable;
+- The processing part of our framework will be managed by Cloud Function coupled with Secret Manager which keeps our versioned secrets. Secret Manager will be used for example to host securely our SendGrid APIs key;
 - The output services like Cloud Storage will allow hosting input/output files, BigQuery will enable us to add analytics layers on top of the system, Cloud Logging will be leveraged for logs, and Sendgrid will serve as an email service for direct notifications. 
 
 ### 1.2 - Task management and Cloud User Experience
@@ -56,12 +58,12 @@ We can then define 4 states for the tasks processed by the Cloud Function, each 
 
 ## II - Deployment
 
-The step by step article link: 
+The step-by-step deployment article is available at this link: 
 [Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
 
 ### 2.1 - Activate services & APIs leveraged by the skeleton
 
-Pulsar is a cloud-native app that aggregates existing GCP services to integrate useful functionalities natively into your cloud function. You have to enable some GCP APIs and Services for the deployment purpose in the API & Services section of your GCP account:
+Pulsar is a cloud-native app that aggregates existing GCP services to integrate useful functionalities natively into your cloud functions. You have to enable some GCP APIs and Services for the deployment purpose in the API & Services section of your GCP account:
 https://console.cloud.google.com/apis/dashboard
 
 - Cloud Storage for persistent storage (enabled by default) : https://console.cloud.google.com/apis/library/storage-component.googleapis.com
@@ -93,12 +95,22 @@ https://console.cloud.google.com/iam-admin/serviceaccounts
 
 ![Service account creation and permissions](readme/pulsar_deploy_service_account_2.png)
 
+You don’t have to do anything in step 3, click “done” to create the service account and ***retain/copy the email of the service account***.
+
 ### 2.3 - Sendgrid API
+In a few words, SendGrid is a cloud-based SMTP provider that allows you to send emails without having to maintain email servers.
 
 To configure SendGrid you need a corporate email address (pseudo@custom_domain.com) allowing the service to trust your identity. 
 You can activate the SendGrid service for your GCP account at this link: https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email
 
-  - [Follow instruction to Activate SendGrid add-on on GCP and obtain you API key](https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email)
+![Service account creation and permissions](readme/pulsar_deploy_sendgrid.png)
+
+[Follow instruction to Activate SendGrid add-on on GCP and obtain you API key](https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email)
+
+After obtaining your API key you must create the SendGrid configuration of your app inside the **“secrets”** folder by using the template “pulsar_sendgrid.template.json”.
+
+![Service account creation and permissions](readme/configure_sendgrid.png)
+
   - Modify the "default_to" and "from" variable in the folder **"/secrets/pulsar_sendgrid.template_json"** file with your Sendgrid verified email.
       - The **"id"** represents the reference of the key;
       - The **"key"** represents your Sendgrid key;
@@ -117,9 +129,9 @@ You can activate the SendGrid service for your GCP account at this link: https:/
 }
 ```
 
-More about creating a SendGrid API key: https://docs.sendgrid.com/ui/account-and-settings/api-keys#creating-an-api-key
+![Service account creation and permissions](readme/configure_sendgrid_2.png)
 
-![SendGrid in GCP](readme/pulsar_deploy_sendgrid.png)
+> By default, all **.json** files in the secret folder are ignored by git for security reasons.
 
 ## III - Add your custom functionalities with custom classes
 
@@ -174,7 +186,7 @@ All JSON keys are mandatory:
   - Level 0, send alerts only on failure (interrupted tasks)
   - Level 1, send alerts on failure or job completion (completed or interrupted tasks)
   - Level 2, send alerts on every state of the job task (ready, runnable and completed tasks)
-- With the **"owners"** key, you can indicate people you want to notify by email, separate emails with pipe (gjuliette@pular.com|droman@pulsar.com)
+- With the **"owners"** key, you can indicate people you want to notify by email, separate emails with pipe (gjuliette@gcpbees.com|droman@gcpbees.com)
 - The **"parameters"** allows you to indicate which function to run, you can do it by providing the path to the **"run"** sub-key in this way: package.module.class.function:Param1,Param2
 
 

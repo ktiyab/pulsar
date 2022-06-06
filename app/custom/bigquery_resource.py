@@ -1,5 +1,6 @@
 import base64
 
+
 class BigqueryResource(object):
 
     @staticmethod

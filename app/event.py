@@ -86,15 +86,4 @@ class SinkTrigger(object):
             return False, message
             pass
 
-    def get_metadata(self, internal_url):
-        """
-        Get GCP internal meta data
-        :param internal_url:
-        :return: Object
-        """
-        logger.info("---->Main.get_metadata: Getting GCP internal meta data.")
-        response = requests.get(url=internal_url, headers={'Metadata-Flavor': 'Google'})
-        if internal_url == app_configs.INTERNAL_REGION_INFO:
-            return str(response.text.split("/")[3])
-        else:
-            return str(response.text)
+

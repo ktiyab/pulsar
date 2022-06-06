@@ -5,6 +5,7 @@
 
 from google.cloud import pubsub_v1
 
+
 class PubSubClient(object):
 
     def __init__(self, project_id):

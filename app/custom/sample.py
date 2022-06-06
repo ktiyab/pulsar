@@ -1,5 +1,6 @@
 import time
 
+
 class Greeting(object):
     def __init__(self):
         pass

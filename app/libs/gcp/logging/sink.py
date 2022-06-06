@@ -54,6 +54,7 @@ class GcsBucket(object):
             "timestamp": str(calendar.timegm(time.gmtime()))
         })
 
+
 class BigqueryResource(object):
     """
     Resource type name is "bigquery_table" > class BigqueryTable

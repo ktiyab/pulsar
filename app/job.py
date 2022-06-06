@@ -4,7 +4,6 @@
 # mailto : tiyab@gcpbees.com | ktiyab@gmail.com
 
 # Definitions: A "job" is a complete unit of work under execution. A job is made up of many steps or "tasks"
-import base64
 import calendar
 import time
 import json
@@ -419,6 +418,7 @@ class Job(object):
             params[app_configs.PROJECT_ID_KEY] = full_topic_array[0].split(app_configs.MODULE_SEPARATOR)[0]
             params[app_configs.TOPIC_KEY] = full_topic_array[0].split(app_configs.MODULE_SEPARATOR)[1]
 
+            full_response = None
             # Set response if placeholder is set
             if app_configs.PLACE_HOLDER in str(full_topic_array[1]):
                 full_response = str(full_topic_array[1]).format(self.task.details)

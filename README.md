@@ -107,7 +107,7 @@ You can activate the SendGrid service for your GCP account at this link: https:/
 
 [Follow instruction to Activate SendGrid add-on on GCP and obtain you API key](https://console.cloud.google.com/marketplace/details/sendgrid-app/sendgrid-email)
 
-After obtaining your API key you must create the SendGrid configuration of your app inside the **“secrets”** folder by using the template “pulsar_sendgrid.template.json”.
+After obtaining your API key you must create the SendGrid configuration of your app inside the **“secrets”** folder by using the template **“pulsar_sendgrid.template.json”**.
 
 ![Service account creation and permissions](readme/configure_sendgrid.png)
 

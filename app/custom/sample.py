@@ -6,11 +6,11 @@ class Greeting(object):
 
     @staticmethod
     def get(name):
-        return "Hello {}".format(name)
+        return "Get Hello {}".format(name)
 
     @staticmethod
     def say(message):
-        return "{}".format(message)
+        return "Say {}".format(message)
 
     @staticmethod
     def sleeper(sec):

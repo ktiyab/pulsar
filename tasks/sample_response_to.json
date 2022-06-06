@@ -1,11 +1,11 @@
 {
   "name": "Greeting",
-  "description": "return: Hello <parameter>",
+  "description": "return: Say Get Hello <parameter>",
   "alert_level": "1",
   "owners": "tiyab@gcpbees.com",
   "parameters": {
     "from": "None",
     "run": "custom.sample.Greeting.get:Pulsar",
-    "response_to": "gcpbees-test.pulsar-topic@custom.sample.Greeting.get: Forwarded {}"
+    "response_to": "gcpbees-test.pulsar-topic@custom.sample.Greeting.say:{}"
   }
 }

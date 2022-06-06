@@ -65,10 +65,10 @@ class SinkTrigger(object):
             # gcs_object = custom.gcs_object.GcsObject.run:<resource_data>
             # Encode the resource information and decode it in the custom class
             data_bytes = resource_data.encode("utf-8")
-            encoded_data_bytes = base64.b64encode(data_bytes)
-            encoded_data = encoded_data_bytes.decode("utf-8")
+            encoded_data = base64.b64encode(data_bytes)
+            decoded_data = encoded_data.decode("utf-8")
 
-            run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, function_reference, encoded_data)
+            run = app_configs.TRIGGER_RUN.format(resource_type, class_reference, function_reference, decoded_data)
 
             loaded_sink_job = app_configs.JOB_TEMPLATE
             loaded_sink_job[app_configs.NAME_KEY] = "{} {}".format(class_reference, function_reference)

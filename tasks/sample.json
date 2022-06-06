@@ -1,9 +1,9 @@
 {
 	"name": "Greeting",
-	"description": "Say greeting.",
+	"description": "Get greeting <parameter>.",
 	"alert_level": "1",
 	"owners": "tiyab@gcpbees.com",
 	"parameters": {
-		"run": "custom.sample.Greeting.say:Serhat"
+		"run": "custom.sample.Greeting.get:Serhat"
 	}
 }

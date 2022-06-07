@@ -55,11 +55,11 @@ We can then define 4 states for the tasks processed by the Cloud Function, each 
 - [Part 2: Designing an abstract and consistent infrastructure as a code](https://medium.com/@ktiyab_42514/pulsar-designing-an-abstract-and-consistent-infrastructure-as-a-code-part-2-10654bc630ed)
 - [Part 3: Ideation of a Cloud User Experience and interaction design conception](https://medium.com/@ktiyab_42514/pulsar-ideation-of-a-cloud-user-experience-and-interaction-design-conception-part-3-2d7533e917e3)
 - [Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
+- [Part 5:  Code and build your Cloud Functions as nano-services ](https://medium.com/@ktiyab_42514/pulsar-code-and-build-your-cloud-functions-as-nano-services-part-5-984003fbde5f)
 
 ## II - Deployment
 
-The step-by-step deployment article is available at this link: 
-[Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
+Related article: [Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
 
 ### 2.1 - Activate services & APIs leveraged by the skeleton
 
@@ -134,6 +134,8 @@ After obtaining your API key you must create the SendGrid configuration of your 
 > By default, all **.json** files in the secret folder are ignored by git for security reasons.
 
 ## III - Add your custom functionalities with custom classes
+
+Related article: [Part 5:  Code and build your Cloud Functions as nano-services ](https://medium.com/@ktiyab_42514/pulsar-code-and-build-your-cloud-functions-as-nano-services-part-5-984003fbde5f)
 
 ### 3.1 Understand the Pulsar wrapper
 

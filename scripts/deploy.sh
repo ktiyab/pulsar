@@ -21,7 +21,7 @@ if [ -z "$1" ]
     echo "---> App name is not provided, the default app name will be: $PULSAR_NAME"
   else
     echo "---> The provided app name is: $1"
-    PULSAR_NAME="${$1,,}"
+    PULSAR_NAME="${1,,}"
     echo "---> The App name will be $PULSAR_NAME."
 fi
 

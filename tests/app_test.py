@@ -9,8 +9,9 @@ import json
 import base64
 import os
 import private
+
+# Load test service account
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = private.SERVICE_ACCOUNT_PATH
-print('Credentials from environ: {}'.format(os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')))
 
 from app import main
 from app import configurations as app_configs
@@ -37,7 +38,7 @@ data = {
  app_configs.NAME_KEY: "Greeting",
  app_configs.DESCRIPTION_KEY: "return: Hello <parameter>",
  app_configs.ALERT_LEVEL_KEY: "1",
- app_configs.OWNERS_KEY: "tiyab@gcpbees.com",
+ app_configs.OWNERS_KEY: private.OWNERS_EMAILS,
  app_configs.PARAMETERS_KEY: {
         app_configs.PARAMS_RUN_KEY: custom_run
   }
@@ -47,7 +48,7 @@ gcs_resource = {
     "protoPayload": {
         "methodName": "storage.objects.create",
         "authenticationInfo": {
-            "principalEmail": "tiyab@gcpbees.com"
+            "principalEmail": private.OWNERS_EMAILS
         },
         "requestMetadata": {
             "callerIp": "127.0.0.1"
@@ -57,7 +58,7 @@ gcs_resource = {
         "type": "gcs_bucket",
         "labels": {
             "location": "europe-west1",
-            "project_id": "gcp_bees",
+            "project_id": private.GCP_PROJECT,
             "bucket_name": "crm_data"
         }
     },
@@ -69,7 +70,7 @@ bq_resource = {
     "protoPayload": {
         "methodName":  "tableservice.insert",
         "authenticationInfo": {
-            "principalEmail": "tiyab@gcpbees.com"
+            "principalEmail": private.OWNERS_EMAILS
         },
         "requestMetadata": {
             "callerIp": "127.0.0.1"
@@ -78,7 +79,7 @@ bq_resource = {
     "resource": {
         "type": "bigquery_resource",
         "labels": {
-            "project_id": "gcp_bees"
+            "project_id": private.GCP_PROJECT
         }
     },
     "resourceName": "projects/pulsar/logs_sink_gcs/pulsar/tables",
@@ -174,7 +175,6 @@ class AppTest(unittest.TestCase):
         run_context = main.run(event_data, Context)
         self.assertEqual(run_context[app_configs.EVENT_ID_KEY], event_id)
 
-
     def test_run_forward_response(self):
         event_data = self.build_forward_sample()
         run_context = main.run(event_data, Context)
@@ -183,6 +183,3 @@ class AppTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-
-

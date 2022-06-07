@@ -27,7 +27,7 @@ fi
 ##### App name checking
 # App name is the dataset name, so it'll follow the dataset constraint:
 ## declare an array variable
-declare -a not_allowed_chars=( "-" "&" "@" "%" )
+declare -a not_allowed_chars=( "-" "&" "@" "%" "_" )
 
 ## now loop through the above array
 for char in "${not_allowed_chars[@]}"
@@ -35,7 +35,7 @@ do
   if [[ "$PULSAR_NAME"  =~ $char ]]; then
     echo "--------------------------------------------------------------------------------------------------------"
     echo "---> Found not allowed character for the App name '$char'."
-    echo "---> Please the App name ($PULSAR_NAME) must not contains -,&,@,%"
+    echo "---> Please the App name ($PULSAR_NAME) must not contains -,&,@,%,_"
     echo "--------------------------------------------------------------------------------------------------------"
     exit 1
   fi

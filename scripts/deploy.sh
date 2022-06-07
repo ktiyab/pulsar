@@ -21,11 +21,13 @@ if [ -z "$1" ]
     echo "---> App name is not provided, the default app name will be: $PULSAR_NAME"
   else
     echo "---> The provided app name is: $1"
-    PULSAR_NAME=$1
+    PULSAR_NAME="${$1,,}"
+    echo "---> The App name will be $PULSAR_NAME."
 fi
 
 ##### App name checking
-# App name is the dataset name, so it'll follow the dataset constraint:
+# App name is the dataset name, so it'll follow the dataset constraint: not -,&,@,%,
+# It'll be also the cloud function name so: not _
 ## declare an array variable
 declare -a not_allowed_chars=( "-" "&" "@" "%" "_" )
 

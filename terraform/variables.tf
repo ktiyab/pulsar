@@ -232,3 +232,33 @@ variable "PULSAR_INTERRUPTED_TABLE_DESCRIPTION" {
   description = "Interrupted table description."
   default = " interrupted tasks table."
 }
+
+variable "PULSAR_DASHBOARD_VIEW_NAME" {
+  type = string
+  description = "Monitoring view name."
+  default = "dashboard"
+}
+
+variable "PULSAR_DASHBOARD_VIEW_DESCRIPTION" {
+  type = string
+  description = "Monitoring view description."
+  default = " view with query for monitoring dashboard."
+}
+
+variable "PULSAR_DASHBOARD_VIEW_QUERY_FILE" {
+  type = string
+  description = "Path to the dashboard query."
+  default = "../dashboard/dashboard_bigquery.sql"
+}
+
+variable "PULSAR_DASHBOARD_PROJECT_PLACEHOLDER" {
+  type = string
+  description = "Placeholder for project ID."
+  default = "@PROJECT_ID"
+}
+
+variable "PULSAR_DASHBOARD_DATASET_PLACEHOLDER" {
+  type = string
+  description = "Placeholder for dataset ID."
+  default = "@DATASET_ID"
+}

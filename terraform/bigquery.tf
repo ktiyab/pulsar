@@ -5,8 +5,14 @@ locals {
   PULSAR_RUNNABLE_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_RUNNABLE_TABLE_DESCRIPTION}"
   PULSAR_COMPLETED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_COMPLETED_TABLE_DESCRIPTION}"
   PULSAR_INTERRUPTED_TABLE_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_INTERRUPTED_TABLE_DESCRIPTION}"
+  PULSAR_DASHBOARD_VIEW_DESCRIPTION = "The ${var.PULSAR_NAME}${var.PULSAR_DASHBOARD_VIEW_DESCRIPTION}"
 
   CURRENT_DATE = formatdate("YYYYMMDD", timestamp())
+
+  PULSAR_DASHBOARD_QUERY_TEMPLATE= replace(var.PULSAR_DASHBOARD_VIEW_QUERY_FILE,var.PULSAR_DASHBOARD_PROJECT_PLACEHOLDER, var.PROJECT_ID)
+  PULSAR_DASHBOARD_QUERY = replace(local.PULSAR_DASHBOARD_QUERY_TEMPLATE,var.PULSAR_DASHBOARD_DATASET_PLACEHOLDER, local.PULSAR_NAME)
+
+
 PULSAR_TASK_SCHEMA= <<EOF
 [
   {
@@ -96,6 +102,8 @@ PULSAR_TASK_SCHEMA= <<EOF
   }
 ]
 EOF
+
+
 }
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset
 resource "google_bigquery_dataset" "pulsar_dataset" {
@@ -137,4 +145,20 @@ resource "google_bigquery_table" "pulsar_table_interrupted" {
 
   schema = local.PULSAR_TASK_SCHEMA
 
+}
+
+resource "google_bigquery_table" "pulsar_dashboard_view" {
+  project     = google_bigquery_dataset.pulsar_dataset.project
+  dataset_id  = google_bigquery_dataset.pulsar_dataset.dataset_id
+  table_id    = var.PULSAR_DASHBOARD_VIEW_NAME
+  description = var.PULSAR_DASHBOARD_VIEW_DESCRIPTION
+
+  view {
+    query = local.PULSAR_DASHBOARD_QUERY
+    use_legacy_sql = false
+  }
+
+  depends_on = [
+    google_bigquery_dataset.pulsar_dataset
+  ]
 }

@@ -58,3 +58,9 @@ PULSAR_INTERRUPTED_TABLE_DESCRIPTION="The ${PULSAR_NAME} terminated tasks table.
 
 PULSAR_DATASET_DESCRIPTION="${PULSAR_NAME} analytical logs."
 PULSAR_TASK_SCHEMA="id:STRING,name:STRING,description:STRING,state:STRING,app:STRING,project_id:STRING,region:STRING,service_account:STRING,runtime:STRING,memory:STRING,alert_level:STRING,owners:STRING,parameters:STRING,acknowledge_timestamp:STRING,processed_timestamp:STRING,success:STRING,details:STRING"
+
+PULSAR_VIEW_NAME="monitoring"
+PULSAR_VIEW_DESCRIPTION=" view with query for monitoring dashboard."
+PULSAR_VIEW_QUERY="dashboard/dashboard_bigquery.sql"
+PULSAR_DASHBOARD_PROJECT_PLACEHOLDER="@PROJECT_ID"
+PULSAR_DASHBOARD_DATASET_PLACEHOLDER="@DATASET_ID"

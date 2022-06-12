@@ -342,7 +342,7 @@ then
   fi
 
   #------------------------------ F - Create default tables schema for Pulsar BigQuery------------------
-  read -p "--->> Do you want to create the default BigQuery Pulsar analytics tables (tasked, initiated, processed, terminated)? [Y/y or N/n]: " -n 1 -r
+  read -p "--->> Do you want to create the default BigQuery $PULSAR_NAME analytics tables (tasked, initiated, processed, terminated)? [Y/y or N/n]: " -n 1 -r
   echo
   if [[ $REPLY =~ ^[Yy]$ ]]
   then
@@ -372,7 +372,30 @@ then
     bq mk --table --description "${PULSAR_INTERRUPTED_TABLE_NAME}" "${PROJECT_ID}:${PULSAR_NAME}.${PULSAR_INTERRUPTED_TABLE_NAME}_${current_table_date}" "$PULSAR_TASK_SCHEMA"
 
   else
-    echo "---> The deployment don't create default Pulsar BigQuery tables"
+    echo "---> The deployment don't create default $PULSAR_NAME BigQuery tables"
+  fi
+
+  #------------------------------ G - Create default BigQuery default view for monitoring------------------
+  read -p "--->> Do you want to create the default BigQuery view for $PULSAR_NAME Monitoring? [Y/y or N/n]: " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]
+  then
+    pwd
+      # -- Load query template and set project-id and dataset-id
+      QUERY_TEMPLATE=$(cat "../${PULSAR_VIEW_QUERY}")
+      QUERY_TEMPLATE="${QUERY_TEMPLATE//$PULSAR_DASHBOARD_PROJECT_PLACEHOLDER/$PROJECT_ID}"
+      QUERY_TEMPLATE="${QUERY_TEMPLATE//$PULSAR_DASHBOARD_DATASET_PLACEHOLDER/$PULSAR_NAME}"
+
+      # Create BigQuery view
+      bq mk \
+      --use_legacy_sql=false \
+      --description "${PULSAR_VIEW_DESCRIPTION}" \
+      --view "$QUERY_TEMPLATE" \
+      --project_id "${PROJECT_ID}" \
+      "${PULSAR_NAME}.${PULSAR_VIEW_NAME}"
+
+  else
+    echo "---> The deployment don't create default $PULSAR_NAME BigQuery view for monitoring."
   fi
 
 else

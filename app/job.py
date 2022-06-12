@@ -36,6 +36,7 @@ class Task(object):
         self.app = deployment_context.APP_NAME
         self.service_account = deployment_context.SERVICE_ACCOUNT_EMAIL
         self.runtime = deployment_context.RUNTIME
+        self.memory = deployment_context.MEMORY
         self.state = None
         self.alert_level = "false"
         self.owners = None
@@ -59,6 +60,7 @@ class Task(object):
             "region": str(self.region) if self.region else "",
             "service_account": str(self.service_account) if self.service_account else "",
             "runtime": str(self.runtime) if self.runtime else "",
+            "memory": str(self.memory) if self.memory else "",
             "alert_level": str(self.alert_level) if self.alert_level else "",
             "owners": str(self.owners) if self.owners else "",
             "parameters": str(self.parameters) if self.parameters else "",
@@ -168,6 +170,7 @@ class Job(object):
             self.task.region = run_context[app_configs.REGION_KEY]
             self.task.service_account = run_context[app_configs.SERVICE_ACCOUNT_KEY]
             self.task.runtime = deployment_context.RUNTIME
+            self.task.memory = deployment_context.MEMORY
 
             # Check if context (allowed Project and region) is valid
             is_valid_context, check_context_message = self.is_valid_context(run_context)
@@ -358,6 +361,7 @@ class Job(object):
             self.task.description = app_configs.TRIGGERED_DESCRIPTION
             self.task.app = deployment_context.APP_NAME
             self.task.runtime = deployment_context.RUNTIME
+            self.task.memory = deployment_context.MEMORY
             self.task.project_id = gcp_context[app_configs.PROJECT_ID_KEY]
             self.task.region = gcp_context[app_configs.REGION_KEY]
             self.task.service_account = gcp_context[app_configs.SERVICE_ACCOUNT_KEY]

@@ -55,6 +55,11 @@ PULSAR_TASK_SCHEMA= <<EOF
     "mode": "NULLABLE"
   },
   {
+    "name": "memory",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
     "name": "alert_level",
     "type": "STRING",
     "mode": "NULLABLE"

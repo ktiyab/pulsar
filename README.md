@@ -55,8 +55,9 @@ We can then define 4 states for the tasks processed by the Cloud Function, each 
 - [Part 2: Designing an abstract and consistent infrastructure as a code](https://medium.com/@ktiyab_42514/pulsar-designing-an-abstract-and-consistent-infrastructure-as-a-code-part-2-10654bc630ed)
 - [Part 3: Ideation of a Cloud User Experience and interaction design conception](https://medium.com/@ktiyab_42514/pulsar-ideation-of-a-cloud-user-experience-and-interaction-design-conception-part-3-2d7533e917e3)
 - [Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
-- [Part 5:  Code and build your Cloud Functions as nano-services ](https://medium.com/@ktiyab_42514/pulsar-code-and-build-your-cloud-functions-as-nano-services-part-5-984003fbde5f)
-
+- [Part 5: Code and build your Cloud Functions as nano-services ](https://medium.com/@ktiyab_42514/pulsar-code-and-build-your-cloud-functions-as-nano-services-part-5-984003fbde5f)
+- [Part 6: Custom “watchdog” to detect non-compliances for BQ & GCS items creation](https://medium.com/@ktiyab_42514/pulsar-doberman-a-custom-watchdog-to-detect-non-compliances-during-bigquery-storage-items-e78420f1550)
+- [Part 7: Avoid turning simple and useful cloud functions into a cloud billing ogre](https://medium.com/@ktiyab_42514/pulsar-avoid-turning-simple-and-useful-cloud-functions-into-a-cloud-billing-ogre-part-7-ed09f7f373b0)
 ## II - Deployment
 
 Related article: [Part 4: Boost your python Google Cloud Functions with a pulsar skeleton](https://medium.com/@ktiyab_42514/pulsar-easily-deploy-a-boosted-python-gcp-functions-with-a-dedicated-skeleton-part-4-6c1ce42a222a)
